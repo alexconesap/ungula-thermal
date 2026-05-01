@@ -14,17 +14,17 @@ static constexpr bool FAN_INVERTED_OUTPUT = true;
 
 static inline FanTachConfig testFanTachConfig() {
     return FanTachConfig{
-        .pulsesPerRev = FAN_PULSES_PER_REV,
-        .minRpmThreshold = FAN_MIN_RPM_THRESHOLD,
-        .samplePeriodMs = FAN_SAMPLE_PERIOD_MS,
-        .minEdgeIntervalUs = FAN_MIN_EDGE_INTERVAL_US,
+            .pulsesPerRev = FAN_PULSES_PER_REV,
+            .minRpmThreshold = FAN_MIN_RPM_THRESHOLD,
+            .samplePeriodMs = FAN_SAMPLE_PERIOD_MS,
+            .minEdgeIntervalUs = FAN_MIN_EDGE_INTERVAL_US,
     };
 }
 
 static inline FanOutputConfig testFanOutputConfig() {
     return FanOutputConfig{
-        .pwmResolution = FAN_PWM_RESOLUTION,
-        .invertedOutput = FAN_INVERTED_OUTPUT,
+            .pwmResolution = FAN_PWM_RESOLUTION,
+            .invertedOutput = FAN_INVERTED_OUTPUT,
     };
 }
 

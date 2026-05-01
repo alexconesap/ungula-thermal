@@ -23,36 +23,37 @@ static constexpr double INTEGRAL_LIMIT = 500.0;
 
 static inline PidConfig testPidConfig() {
     return PidConfig{
-        .approachGains = {36.0 / FAHRENHEIT_TO_CELSIUS_FACTOR, 0.55 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+            .approachGains = {36.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+                              0.55 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+                              5.5 / FAHRENHEIT_TO_CELSIUS_FACTOR},
+            .holdGains = {16.0 / FAHRENHEIT_TO_CELSIUS_FACTOR, 0.32 / FAHRENHEIT_TO_CELSIUS_FACTOR,
                           5.5 / FAHRENHEIT_TO_CELSIUS_FACTOR},
-        .holdGains = {16.0 / FAHRENHEIT_TO_CELSIUS_FACTOR, 0.32 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-                      5.5 / FAHRENHEIT_TO_CELSIUS_FACTOR},
-        .derivativeFilterAlpha = 0.25,
-        .derivativeFilterAlphaMin = 0.05,
-        .derivativeFilterAlphaMax = 1.0,
-        .setpointApproachThresholdC = SETPOINT_APPROACH_THRESHOLD_C,
-        .setpointApproachOffsetC = SETPOINT_APPROACH_OFFSET_C,
-        .gainSwitchBandC = GAIN_SWITCH_BAND_C,
-        .derivativeEnableMarginC = DERIVATIVE_ENABLE_MARGIN_C,
-        .kiReductionBandNarrowC = KI_REDUCTION_BAND_NARROW_C,
-        .kiReductionBandWideC = KI_REDUCTION_BAND_WIDE_C,
-        .kiReductionFactorNarrow = KI_REDUCTION_FACTOR_NARROW,
-        .kiReductionFactorWide = KI_REDUCTION_FACTOR_WIDE,
-        .integralLimit = INTEGRAL_LIMIT,
-        .antiwindupGain = 0.2,
-        .hysteresisAboveSetpointC = HYSTERESIS_ABOVE_SETPOINT_C,
-        .hysteresisBelowSetpointC = HYSTERESIS_BELOW_SETPOINT_C,
-        .outputMax = 255.0,
+            .derivativeFilterAlpha = 0.25,
+            .derivativeFilterAlphaMin = 0.05,
+            .derivativeFilterAlphaMax = 1.0,
+            .setpointApproachThresholdC = SETPOINT_APPROACH_THRESHOLD_C,
+            .setpointApproachOffsetC = SETPOINT_APPROACH_OFFSET_C,
+            .gainSwitchBandC = GAIN_SWITCH_BAND_C,
+            .derivativeEnableMarginC = DERIVATIVE_ENABLE_MARGIN_C,
+            .kiReductionBandNarrowC = KI_REDUCTION_BAND_NARROW_C,
+            .kiReductionBandWideC = KI_REDUCTION_BAND_WIDE_C,
+            .kiReductionFactorNarrow = KI_REDUCTION_FACTOR_NARROW,
+            .kiReductionFactorWide = KI_REDUCTION_FACTOR_WIDE,
+            .integralLimit = INTEGRAL_LIMIT,
+            .antiwindupGain = 0.2,
+            .hysteresisAboveSetpointC = HYSTERESIS_ABOVE_SETPOINT_C,
+            .hysteresisBelowSetpointC = HYSTERESIS_BELOW_SETPOINT_C,
+            .outputMax = 255.0,
     };
 }
 
 class PidControllerTest : public ::testing::Test {
-   protected:
-    PidController pid{testPidConfig()};
+    protected:
+        PidController pid{testPidConfig()};
 
-    void SetUp() override {
-        pid.reset();
-    }
+        void SetUp() override {
+            pid.reset();
+        }
 };
 
 // --- Reset state ---
@@ -300,7 +301,8 @@ TEST_F(PidControllerTest, EffectiveSetpointOffsetDisabledAfterReaching) {
     // Drop below approach threshold but stay within hysteresis band so latch stays set.
     // SETPOINT_APPROACH_THRESHOLD_C = 5.0/1.8 ≈ 2.78, HYSTERESIS_BELOW = 1.2/1.8 ≈ 0.67
     // Use temp = setpoint - 2.0 (below approach threshold, but above hysteresis clear point)
-    double temp = setpoint - 2.0;  // 288 — still > setpoint - HYSTERESIS_BELOW(0.67)? No, 288 < 289.33
+    double temp =
+            setpoint - 2.0;  // 288 — still > setpoint - HYSTERESIS_BELOW(0.67)? No, 288 < 289.33
     // Actually hysteresis clear is at setpoint - 0.667 = 289.333. Temp 288 < 289.333 clears latch.
     // The approach threshold (2.78) > hysteresis band (0.667), so once latched and dropped below
     // the approach threshold, the latch will ALWAYS be cleared first.
@@ -547,7 +549,8 @@ TEST_F(PidControllerTest, WarmupRampReducesOutputAsApproachingSetpoint) {
     for (int i = 0; i <= 100; i++) {
         double temp = 20.0 + (290.0 - 20.0) * i / 100.0;
         auto result = pid.compute(temp, setpoint, dt);
-        if (i == 0) firstOutput = result.rawOutput;
+        if (i == 0)
+            firstOutput = result.rawOutput;
         lastOutput = result.rawOutput;
     }
 

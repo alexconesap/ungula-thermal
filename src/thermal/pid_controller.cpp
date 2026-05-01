@@ -47,7 +47,8 @@ namespace ungula {
         }
 
         void PidController::setDerivativeFilterAlpha(double alpha) {
-            derivativeAlpha_ = clamp(alpha, config_.derivativeFilterAlphaMin, config_.derivativeFilterAlphaMax);
+            derivativeAlpha_ = clamp(alpha, config_.derivativeFilterAlphaMin,
+                                     config_.derivativeFilterAlphaMax);
         }
 
         void PidController::setOutputLimits(double minOutput, double maxOutput) {
@@ -55,7 +56,8 @@ namespace ungula {
             outputMax_ = maxOutput;
         }
 
-        void PidController::initializeForBumplessTransfer(double currentOutput, double currentTemp, double setpoint) {
+        void PidController::initializeForBumplessTransfer(double currentOutput, double currentTemp,
+                                                          double setpoint) {
             filteredTemp_ = currentTemp;
             lastFilteredTemp_ = currentTemp;
             lastDerivativeCps_ = 0.0;
@@ -145,8 +147,9 @@ namespace ungula {
             integral_ = clamp(integral_, -config_.integralLimit, config_.integralLimit);
             result.iTerm = kiEffective * integral_;
 
-            bool shouldApplyDerivative = (processValue >= result.effectiveSetpoint) ||
-                                         (std::fabs(error) <= config_.gainSwitchBandC + config_.derivativeEnableMarginC);
+            bool shouldApplyDerivative =
+                    (processValue >= result.effectiveSetpoint) ||
+                    (std::fabs(error) <= config_.gainSwitchBandC + config_.derivativeEnableMarginC);
             result.dTerm = shouldApplyDerivative ? (gains.kd * (-dTemp)) : 0.0;
 
             double output = result.pTerm + result.iTerm + result.dTerm;
@@ -154,7 +157,8 @@ namespace ungula {
             double outputSaturated = clamp(output, outputMin_, outputMax_);
 
             if (output != outputSaturated) {
-                double antiwindupCorrection = (outputSaturated - output) * config_.antiwindupGain * dtSeconds;
+                double antiwindupCorrection =
+                        (outputSaturated - output) * config_.antiwindupGain * dtSeconds;
                 integral_ += antiwindupCorrection;
                 integral_ = clamp(integral_, -config_.integralLimit, config_.integralLimit);
             }

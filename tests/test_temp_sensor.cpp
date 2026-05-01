@@ -12,16 +12,16 @@ static constexpr double MIN_VALID_TEMP_C = -40.0;
 
 static inline NtcConfig testNtcConfig() {
     return NtcConfig{
-        .seriesResistorOhms = 470.0,
-        .nominalResistanceOhms = 100000.0,
-        .betaCoefficient = 3950.0,
-        .referenceTempC = 25.0,
-        .supplyVoltageMv = 3300,
-        .disconnectedMarginMv = 2.0,
-        .minReasonableResistanceOhms = 1.0,
-        .maxReasonableResistanceOhms = 5000000.0,
-        .maxValidTempC = MAX_VALID_TEMP_C,
-        .minValidTempC = MIN_VALID_TEMP_C,
+            .seriesResistorOhms = 470.0,
+            .nominalResistanceOhms = 100000.0,
+            .betaCoefficient = 3950.0,
+            .referenceTempC = 25.0,
+            .supplyVoltageMv = 3300,
+            .disconnectedMarginMv = 2.0,
+            .minReasonableResistanceOhms = 1.0,
+            .maxReasonableResistanceOhms = 5000000.0,
+            .maxValidTempC = MAX_VALID_TEMP_C,
+            .minValidTempC = MIN_VALID_TEMP_C,
     };
 }
 

@@ -24,7 +24,8 @@ namespace ungula {
 
             double rNtc = cfg.seriesResistorOhms * (vm / denominator);
 
-            if (!std::isfinite(rNtc) || rNtc < cfg.minReasonableResistanceOhms || rNtc > cfg.maxReasonableResistanceOhms) {
+            if (!std::isfinite(rNtc) || rNtc < cfg.minReasonableResistanceOhms ||
+                rNtc > cfg.maxReasonableResistanceOhms) {
                 return NAN;
             }
 
@@ -56,15 +57,15 @@ namespace ungula {
             return rawTempC + offsetC;
         }
 
-        TemperatureSensor::TemperatureSensor(uint8_t channelIndex, int adcPin, double calibrationOffsetC, const NtcConfig& ntcCfg)
+        TemperatureSensor::TemperatureSensor(uint8_t channelIndex, int adcPin,
+                                             double calibrationOffsetC, const NtcConfig& ntcCfg)
             : channelIndex_(channelIndex),
               adcPin_(adcPin),
               calibrationOffset_(calibrationOffsetC),
               ntcConfig_(ntcCfg),
               lastRawTempC_(NAN),
               lastCalibratedTempC_(NAN),
-              lastAdcMv_(0) {
-        }
+              lastAdcMv_(0) {}
 
         double TemperatureSensor::readTemperatureC(int adcMillivolts) {
             lastAdcMv_ = adcMillivolts;

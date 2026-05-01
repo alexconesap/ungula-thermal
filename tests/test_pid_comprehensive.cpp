@@ -17,24 +17,24 @@ static constexpr double F2C = 1.8;
 
 static PidConfig productionConfig() {
     return PidConfig{
-        .approachGains = {36.0 / F2C, 0.55 / F2C, 5.5 / F2C},
-        .holdGains = {16.0 / F2C, 0.32 / F2C, 5.5 / F2C},
-        .derivativeFilterAlpha = 0.25,
-        .derivativeFilterAlphaMin = 0.05,
-        .derivativeFilterAlphaMax = 1.0,
-        .setpointApproachThresholdC = 5.0 / F2C,
-        .setpointApproachOffsetC = 2.0 / F2C,
-        .gainSwitchBandC = 1.0 / F2C,
-        .derivativeEnableMarginC = 0.5 / F2C,
-        .kiReductionBandNarrowC = 1.0 / F2C,
-        .kiReductionBandWideC = 2.0 / F2C,
-        .kiReductionFactorNarrow = 0.5,
-        .kiReductionFactorWide = 0.6,
-        .integralLimit = 500.0,
-        .antiwindupGain = 0.2,
-        .hysteresisAboveSetpointC = 0.8 / F2C,
-        .hysteresisBelowSetpointC = 1.2 / F2C,
-        .outputMax = 255.0,
+            .approachGains = {36.0 / F2C, 0.55 / F2C, 5.5 / F2C},
+            .holdGains = {16.0 / F2C, 0.32 / F2C, 5.5 / F2C},
+            .derivativeFilterAlpha = 0.25,
+            .derivativeFilterAlphaMin = 0.05,
+            .derivativeFilterAlphaMax = 1.0,
+            .setpointApproachThresholdC = 5.0 / F2C,
+            .setpointApproachOffsetC = 2.0 / F2C,
+            .gainSwitchBandC = 1.0 / F2C,
+            .derivativeEnableMarginC = 0.5 / F2C,
+            .kiReductionBandNarrowC = 1.0 / F2C,
+            .kiReductionBandWideC = 2.0 / F2C,
+            .kiReductionFactorNarrow = 0.5,
+            .kiReductionFactorWide = 0.6,
+            .integralLimit = 500.0,
+            .antiwindupGain = 0.2,
+            .hysteresisAboveSetpointC = 0.8 / F2C,
+            .hysteresisBelowSetpointC = 1.2 / F2C,
+            .outputMax = 255.0,
     };
 }
 
@@ -43,8 +43,8 @@ static PidConfig productionConfig() {
 // ============================================================================
 
 class PidConfigInjection : public ::testing::Test {
-   protected:
-    PidController pid{productionConfig()};
+    protected:
+        PidController pid{productionConfig()};
 };
 
 TEST_F(PidConfigInjection, ApproachGainsAreUsedFarFromSetpoint) {
@@ -170,24 +170,24 @@ TEST_F(PidConfigInjection, KiReductionBandsFromConfig) {
 // Use a simple config where we can compute expected values by hand
 static PidConfig simpleConfig() {
     return PidConfig{
-        .approachGains = {10.0, 0.5, 2.0},
-        .holdGains = {5.0, 0.25, 2.0},
-        .derivativeFilterAlpha = 1.0,  // no filtering, instant response
-        .derivativeFilterAlphaMin = 0.05,
-        .derivativeFilterAlphaMax = 1.0,
-        .setpointApproachThresholdC = 5.0,
-        .setpointApproachOffsetC = 2.0,
-        .gainSwitchBandC = 1.0,
-        .derivativeEnableMarginC = 0.5,
-        .kiReductionBandNarrowC = 1.0,
-        .kiReductionBandWideC = 2.0,
-        .kiReductionFactorNarrow = 0.5,
-        .kiReductionFactorWide = 0.6,
-        .integralLimit = 500.0,
-        .antiwindupGain = 0.2,
-        .hysteresisAboveSetpointC = 1.0,
-        .hysteresisBelowSetpointC = 1.0,
-        .outputMax = 255.0,
+            .approachGains = {10.0, 0.5, 2.0},
+            .holdGains = {5.0, 0.25, 2.0},
+            .derivativeFilterAlpha = 1.0,  // no filtering, instant response
+            .derivativeFilterAlphaMin = 0.05,
+            .derivativeFilterAlphaMax = 1.0,
+            .setpointApproachThresholdC = 5.0,
+            .setpointApproachOffsetC = 2.0,
+            .gainSwitchBandC = 1.0,
+            .derivativeEnableMarginC = 0.5,
+            .kiReductionBandNarrowC = 1.0,
+            .kiReductionBandWideC = 2.0,
+            .kiReductionFactorNarrow = 0.5,
+            .kiReductionFactorWide = 0.6,
+            .integralLimit = 500.0,
+            .antiwindupGain = 0.2,
+            .hysteresisAboveSetpointC = 1.0,
+            .hysteresisBelowSetpointC = 1.0,
+            .outputMax = 255.0,
     };
 }
 
@@ -301,24 +301,26 @@ TEST(PidDeterministic, DerivativeFilteringWithLowAlpha) {
 // ============================================================================
 
 class PidTrajectoryTest : public ::testing::Test {
-   protected:
-    PidController pid{productionConfig()};
-    static constexpr double DT = 0.02;   // 50Hz like production
-    static constexpr double SP = 315.0;  // ~600F, typical catheter reflow setpoint in Celsius
+    protected:
+        PidController pid{productionConfig()};
+        static constexpr double DT = 0.02;   // 50Hz like production
+        static constexpr double SP = 315.0;  // ~600F, typical catheter reflow setpoint in Celsius
 
-    struct TrajectoryPoint {
-        double temperature;
-        // Expected invariants checked per-point
-    };
+        struct TrajectoryPoint {
+                double temperature;
+                // Expected invariants checked per-point
+        };
 };
 
 TEST_F(PidTrajectoryTest, HeatingRampFromColdToSetpoint) {
     // Simulate a realistic heating ramp: 25C -> 315C over ~300 steps
     // (20ms per step = 6 seconds of simulated time)
     double temps[] = {
-        25.0,  30.0,  38.0,  48.0,  60.0,  75.0,  92.0,  110.0, 130.0, 150.0, 168.0, 185.0, 200.0, 215.0, 228.0, 240.0, 250.0,
-        258.0, 265.0, 272.0, 278.0, 283.0, 288.0, 292.0, 296.0, 299.0, 301.5, 303.5, 305.0, 306.5, 308.0, 309.2, 310.3, 311.2,
-        312.0, 312.6, 313.1, 313.5, 313.9, 314.2, 314.4, 314.6, 314.8, 315.0, 315.3, 315.5, 315.3, 315.0, 315.1, 315.0,
+            25.0,  30.0,  38.0,  48.0,  60.0,  75.0,  92.0,  110.0, 130.0, 150.0,
+            168.0, 185.0, 200.0, 215.0, 228.0, 240.0, 250.0, 258.0, 265.0, 272.0,
+            278.0, 283.0, 288.0, 292.0, 296.0, 299.0, 301.5, 303.5, 305.0, 306.5,
+            308.0, 309.2, 310.3, 311.2, 312.0, 312.6, 313.1, 313.5, 313.9, 314.2,
+            314.4, 314.6, 314.8, 315.0, 315.3, 315.5, 315.3, 315.0, 315.1, 315.0,
     };
     int n = sizeof(temps) / sizeof(temps[0]);
 
@@ -343,9 +345,12 @@ TEST_F(PidTrajectoryTest, HeatingRampFromColdToSetpoint) {
         // Effective setpoint must be >= nominal setpoint
         EXPECT_GE(r.effectiveSetpoint, SP - 0.001) << "Step " << i;
 
-        if (!r.inHoldMode) sawApproachMode = true;
-        if (r.inHoldMode) sawHoldMode = true;
-        if (pid.hasReachedSetpoint()) latchSetAtSomePoint = true;
+        if (!r.inHoldMode)
+            sawApproachMode = true;
+        if (r.inHoldMode)
+            sawHoldMode = true;
+        if (pid.hasReachedSetpoint())
+            latchSetAtSomePoint = true;
 
         prevOutput = r.rawOutput;
     }
@@ -362,60 +367,60 @@ TEST_F(PidTrajectoryTest, OscillationAroundSetpoint) {
     // Simulate temperature oscillating around setpoint with realistic thermal noise
     // This is the most important test: verifies PID behavior during steady-state
     double oscillation[] = {
-        // First, approach setpoint
-        300.0,
-        305.0,
-        310.0,
-        313.0,
-        314.5,
-        315.0,
-        // Now oscillate: +-0.3C (typical thermal noise)
-        315.2,
-        315.1,
-        314.8,
-        314.7,
-        314.9,
-        315.1,
-        315.3,
-        315.2,
-        315.0,
-        314.8,
-        314.7,
-        314.9,
-        315.0,
-        315.2,
-        315.3,
-        315.1,
-        314.9,
-        314.8,
-        315.0,
-        315.1,
-        315.0,
-        314.9,
-        315.0,
-        315.1,
-        315.0,
-        314.9,
-        315.0,
-        // Wider swing: +-0.5C
-        315.5,
-        315.3,
-        315.0,
-        314.6,
-        314.5,
-        314.7,
-        315.0,
-        315.4,
-        315.5,
-        315.2,
-        314.9,
-        314.6,
-        314.8,
-        315.1,
-        315.3,
-        315.0,
-        314.8,
-        315.0,
+            // First, approach setpoint
+            300.0,
+            305.0,
+            310.0,
+            313.0,
+            314.5,
+            315.0,
+            // Now oscillate: +-0.3C (typical thermal noise)
+            315.2,
+            315.1,
+            314.8,
+            314.7,
+            314.9,
+            315.1,
+            315.3,
+            315.2,
+            315.0,
+            314.8,
+            314.7,
+            314.9,
+            315.0,
+            315.2,
+            315.3,
+            315.1,
+            314.9,
+            314.8,
+            315.0,
+            315.1,
+            315.0,
+            314.9,
+            315.0,
+            315.1,
+            315.0,
+            314.9,
+            315.0,
+            // Wider swing: +-0.5C
+            315.5,
+            315.3,
+            315.0,
+            314.6,
+            314.5,
+            314.7,
+            315.0,
+            315.4,
+            315.5,
+            315.2,
+            314.9,
+            314.6,
+            314.8,
+            315.1,
+            315.3,
+            315.0,
+            314.8,
+            315.0,
     };
     int n = sizeof(oscillation) / sizeof(oscillation[0]);
 
@@ -432,7 +437,8 @@ TEST_F(PidTrajectoryTest, OscillationAroundSetpoint) {
     // During steady-state oscillation, the output should remain moderate
     // (not pegged at 0 or 255). Check the oscillation phase (steps 6+).
     for (int i = 6; i < n; i++) {
-        EXPECT_LT(outputs[i].rawOutput, 200.0) << "Step " << i << ": output too high during oscillation, PID not settling";
+        EXPECT_LT(outputs[i].rawOutput, 200.0)
+                << "Step " << i << ": output too high during oscillation, PID not settling";
     }
 
     // The integral should be bounded and not wind up
@@ -442,34 +448,34 @@ TEST_F(PidTrajectoryTest, OscillationAroundSetpoint) {
 TEST_F(PidTrajectoryTest, CoolingAndReheating) {
     // Start at setpoint, cool down (heater off or fan on), then reheat
     double trajectory[] = {
-        // At setpoint
-        315.0,
-        315.0,
-        315.0,
-        // Cooling phase (gradual)
-        314.5,
-        313.8,
-        312.5,
-        311.0,
-        309.0,
-        306.0,
-        303.0,
-        300.0,
-        // Reheating
-        300.5,
-        302.0,
-        304.0,
-        306.0,
-        308.0,
-        310.0,
-        312.0,
-        313.5,
-        314.0,
-        314.5,
-        314.8,
-        315.0,
-        315.1,
-        315.0,
+            // At setpoint
+            315.0,
+            315.0,
+            315.0,
+            // Cooling phase (gradual)
+            314.5,
+            313.8,
+            312.5,
+            311.0,
+            309.0,
+            306.0,
+            303.0,
+            300.0,
+            // Reheating
+            300.5,
+            302.0,
+            304.0,
+            306.0,
+            308.0,
+            310.0,
+            312.0,
+            313.5,
+            314.0,
+            314.5,
+            314.8,
+            315.0,
+            315.1,
+            315.0,
     };
     int n = sizeof(trajectory) / sizeof(trajectory[0]);
 
@@ -492,7 +498,8 @@ TEST_F(PidTrajectoryTest, CoolingAndReheating) {
         prevOutput = r.rawOutput;
     }
 
-    EXPECT_TRUE(outputIncreasedDuringCooling) << "PID should increase output when temperature drops below setpoint";
+    EXPECT_TRUE(outputIncreasedDuringCooling)
+            << "PID should increase output when temperature drops below setpoint";
 }
 
 TEST_F(PidTrajectoryTest, SetpointChangeFromLowToHigh) {
@@ -539,10 +546,10 @@ TEST_F(PidTrajectoryTest, LongRunStabilityWithRealisticNoise) {
 // ============================================================================
 
 class PidErrorConditions : public ::testing::Test {
-   protected:
-    PidController pid{productionConfig()};
-    static constexpr double DT = 0.02;
-    static constexpr double SP = 315.0;
+    protected:
+        PidController pid{productionConfig()};
+        static constexpr double DT = 0.02;
+        static constexpr double SP = 315.0;
 };
 
 TEST_F(PidErrorConditions, NanInputResetsStateAndReturnsZero) {

@@ -7,16 +7,18 @@
 namespace ungula {
     namespace thermal {
 
-        FanPwmCalculator::FanPwmCalculator(const FanOutputConfig& config) : config_(config) {
-        }
+        FanPwmCalculator::FanPwmCalculator(const FanOutputConfig& config) : config_(config) {}
 
         uint16_t FanPwmCalculator::calculateDuty(int speedPercent) const {
-            if (speedPercent < 0) speedPercent = 0;
-            if (speedPercent > 100) speedPercent = 100;
+            if (speedPercent < 0)
+                speedPercent = 0;
+            if (speedPercent > 100)
+                speedPercent = 100;
 
             uint16_t duty;
             if (config_.invertedOutput) {
-                duty = static_cast<uint16_t>(config_.pwmResolution - (speedPercent * config_.pwmResolution / 100));
+                duty = static_cast<uint16_t>(config_.pwmResolution -
+                                             (speedPercent * config_.pwmResolution / 100));
             } else {
                 duty = static_cast<uint16_t>(speedPercent * config_.pwmResolution / 100);
             }
