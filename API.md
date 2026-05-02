@@ -54,7 +54,7 @@ static const HeaterChannelConfig kHeaterCfg = {
         .aboveSpAtMaxError  = 0.0,
         .errorThresholdFarC = 5.6,   .errorThresholdMidC = 2.8,
         .errorThresholdCloseC = 1.1, .holdBandC          = 0.56,
-        .setpointMinF = 200.0,       .setpointMaxF       = 700.0,
+        .setpointMinC = 200.0,       .setpointMaxC       = 700.0,
         .pwmResolution = 255,
     },
     .governor = {
@@ -231,7 +231,7 @@ NTC divider parameters and validity gates. `disconnectedMarginMv` plus `[minReas
 When `|derivativeCps| > thresholdCps`, target duty is multiplied by `outputReductionFactor`; saturating limit is `maxRateCps`.
 
 ### `DutyFloorConfig`
-Lookup-table floor duty depending on signed error vs setpoint, plus a hold band and a setpoint range (`setpointMinF`, `setpointMaxF`, **Fahrenheit**, used only as normalization input — every other temperature in the library is Celsius).
+Lookup-table floor duty depending on signed error vs setpoint, plus a hold band and a setpoint range (`setpointMinC`, `setpointMaxC`, **Fahrenheit**, used only as normalization input — every other temperature in the library is Celsius).
 
 ### `HeaterChannelConfig`
 Bundle: `pid`, `floor`, `governor`, `rateLimiter`, `ntc`. Pass once at construction.
@@ -426,7 +426,7 @@ There is no FSM in this library. Heater state is implicit (sensor connected/disc
 - `DutyFloorCalculator::normalizeSetpoint`, `computeFloorBelowSetpoint`, `computeFloorAboveSetpoint`, `computeHoldFloor` — private; the public surface is `computeFloor()` and `FloorReason`.
 - `HeaterChannel` private members (`sensor_`, `pid_`, `governor_`, `floorCalc_`, `rateLimiter_`, `state_`) — do not introspect; use `getState()` and `getTemperatureC()`.
 - `FanChannelState::pulseCount` is a transient counter cleared every `update()`. Treat it as opaque.
-- `library.properties` `setpointMinF` / `setpointMaxF` use Fahrenheit purely as the floor calculator's normalization range; do not interpret them as a project-wide unit choice. All other temperatures are Celsius.
+- `library.properties` `setpointMinC` / `setpointMaxC` use Fahrenheit purely as the floor calculator's normalization range; do not interpret them as a project-wide unit choice. All other temperatures are Celsius.
 - The README's Quick Start uses a 4-arg `HeaterChannel` constructor and a default-constructed `FanController<2>`. **The actual constructors require a `HeaterChannelConfig` and a `(FanTachConfig, FanOutputConfig)` pair respectively.** Trust the headers, not the README.
 
 ---
@@ -439,7 +439,7 @@ Proposed deepening (none of this exists yet):
 
 1. Make `DutyGovernor`, `DutyFloorCalculator`, `RateLimiter`, `FanPwmCalculator`, `FanTachometer` `internal` (move headers under `src/thermal/internal/`) and re-expose only `HeaterChannel`, `FanController`, `PidController`, `TemperatureSensor`, plus the config structs.
 2. Add a first-class fault enum returned by `HeaterChannel::update()` (e.g. `HeaterFault::None | SensorOpen | OverTemp | StaleClock`) so the host SAFE check is one comparison, not four.
-3. Add a unit-tagged temperature type (`Celsius{double}`) to remove the `setpointMinF` / `setpointMaxF` Fahrenheit leak in `DutyFloorConfig`.
+3. Add a unit-tagged temperature type (`Celsius{double}`) to remove the `setpointMinC` / `setpointMaxC` Fahrenheit leak in `DutyFloorConfig`.
 4. Provide a host-side helper that wraps the recommended SAFE pattern (`heater.updateSafe(adcMv, now, dt, &dutyOut)` returning `HeaterFault`).
 5. Add a static maximum-duty hard ceiling separate from `outputMax`, latched at construction, that no setter can raise.
 

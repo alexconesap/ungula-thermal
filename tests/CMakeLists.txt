@@ -15,9 +15,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 
 set(LIB_THERMAL_SRC ${CMAKE_CURRENT_LIST_DIR}/../src)
+set(LIB_GENERIC_SRC   ${CMAKE_CURRENT_LIST_DIR}/../../lib/src)
 
 include_directories(
     ${LIB_THERMAL_SRC}
+    ${LIB_GENERIC_SRC}
     ${CMAKE_CURRENT_LIST_DIR}/ArduinoStub
 )
 

@@ -51,8 +51,8 @@ static inline DutyFloorConfig testDutyFloorConfig() {
             .errorThresholdMidC = 2.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
             .errorThresholdCloseC = 0.5 / FAHRENHEIT_TO_CELSIUS_FACTOR,
             .holdBandC = 6.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-            .setpointMinF = 350.0,
-            .setpointMaxF = 600.0,
+            .setpointMinC = 350.0,
+            .setpointMaxC = 600.0,
             .pwmResolution = PWM_RESOLUTION,
     };
 }
