@@ -5,6 +5,7 @@ Checks: >
   clang-analyzer-*,
   performance-*,
   readability-*,
+  -readability-use-std-min-max,
   google-*,
   -google-readability-todo,
   -readability-magic-numbers

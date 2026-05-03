@@ -12,6 +12,10 @@ using namespace ungula::math;
 namespace ungula {
     namespace thermal {
 
+        // Safe mid-range default so the PID has a sane reference before the first
+        // real setpoint arrives, avoiding full-power output at startup.
+        static constexpr double kDefaultSafeSetpointC = 290.0;
+
         // ---- DutyGovernor ----
 
         DutyGovernor::DutyGovernor(const GovernorConfig& cfg)
@@ -193,7 +197,7 @@ namespace ungula {
                                      double calibrationOffsetC, const HeaterChannelConfig& cfg)
             : index_(index),
               heaterPin_(heaterPin),
-              setpointC_(290.0),
+              setpointC_(kDefaultSafeSetpointC),
               setpointTrimC_(0.0),
               approachGains_(cfg.pid.approachGains),
               holdGains_(cfg.pid.holdGains),
