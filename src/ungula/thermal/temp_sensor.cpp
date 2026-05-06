@@ -8,75 +8,74 @@
 
 namespace ungula::thermal {
 
+    double ntcMillivoltsToTempC(int millivolts, const NtcConfig& cfg) {
+        double vm = static_cast<double>(millivolts);
+        double vcc = static_cast<double>(cfg.supplyVoltageMv);
 
-double ntcMillivoltsToTempC(int millivolts, const NtcConfig& cfg) {
-    double vm = static_cast<double>(millivolts);
-    double vcc = static_cast<double>(cfg.supplyVoltageMv);
+        if (vm < cfg.disconnectedMarginMv) {
+            return NAN;
+        }
 
-    if (vm < cfg.disconnectedMarginMv) {
-        return NAN;
+        double denominator = vcc - vm;
+        if (denominator <= 0.0) {
+            return NAN;
+        }
+
+        double rNtc = cfg.seriesResistorOhms * (vm / denominator);
+
+        if (!std::isfinite(rNtc) || rNtc < cfg.minReasonableResistanceOhms ||
+            rNtc > cfg.maxReasonableResistanceOhms) {
+            return NAN;
+        }
+
+        constexpr double KELVIN_OFFSET = 273.15;
+        double t0Kelvin = cfg.referenceTempC + KELVIN_OFFSET;
+
+        double lnRatio = std::log(rNtc / cfg.nominalResistanceOhms);
+        double inverseT = (1.0 / t0Kelvin) + (1.0 / cfg.betaCoefficient) * lnRatio;
+
+        if (!std::isfinite(inverseT) || inverseT <= 0.0) {
+            return NAN;
+        }
+
+        double tempKelvin = 1.0 / inverseT;
+        double tempC = tempKelvin - KELVIN_OFFSET;
+
+        // Reject physically impossible readings (floating/disconnected pin noise)
+        if (tempC > cfg.maxValidTempC || tempC < cfg.minValidTempC) {
+            return NAN;
+        }
+
+        return tempC;
     }
 
-    double denominator = vcc - vm;
-    if (denominator <= 0.0) {
-        return NAN;
+    double applyCalibrationOffset(double rawTempC, double offsetC) {
+        if (!std::isfinite(rawTempC)) {
+            return NAN;
+        }
+        return rawTempC + offsetC;
     }
 
-    double rNtc = cfg.seriesResistorOhms * (vm / denominator);
+    TemperatureSensor::TemperatureSensor(uint8_t channelIndex, int adcPin,
+                                         double calibrationOffsetC, const NtcConfig& ntcCfg)
+        : channelIndex_(channelIndex),
+          adcPin_(adcPin),
+          calibrationOffset_(calibrationOffsetC),
+          ntcConfig_(ntcCfg),
+          lastRawTempC_(NAN),
+          lastCalibratedTempC_(NAN),
+          lastAdcMv_(0) {}
 
-    if (!std::isfinite(rNtc) || rNtc < cfg.minReasonableResistanceOhms ||
-        rNtc > cfg.maxReasonableResistanceOhms) {
-        return NAN;
+    double TemperatureSensor::readTemperatureC(int adcMillivolts) {
+        lastAdcMv_ = adcMillivolts;
+        lastRawTempC_ = ntcMillivoltsToTempC(adcMillivolts, ntcConfig_);
+        lastCalibratedTempC_ = applyCalibrationOffset(lastRawTempC_, calibrationOffset_);
+        return lastCalibratedTempC_;
     }
 
-    constexpr double KELVIN_OFFSET = 273.15;
-    double t0Kelvin = cfg.referenceTempC + KELVIN_OFFSET;
-
-    double lnRatio = std::log(rNtc / cfg.nominalResistanceOhms);
-    double inverseT = (1.0 / t0Kelvin) + (1.0 / cfg.betaCoefficient) * lnRatio;
-
-    if (!std::isfinite(inverseT) || inverseT <= 0.0) {
-        return NAN;
+    bool TemperatureSensor::isConnected() const {
+        return std::isfinite(lastCalibratedTempC_);
     }
-
-    double tempKelvin = 1.0 / inverseT;
-    double tempC = tempKelvin - KELVIN_OFFSET;
-
-    // Reject physically impossible readings (floating/disconnected pin noise)
-    if (tempC > cfg.maxValidTempC || tempC < cfg.minValidTempC) {
-        return NAN;
-    }
-
-    return tempC;
-}
-
-double applyCalibrationOffset(double rawTempC, double offsetC) {
-    if (!std::isfinite(rawTempC)) {
-        return NAN;
-    }
-    return rawTempC + offsetC;
-}
-
-TemperatureSensor::TemperatureSensor(uint8_t channelIndex, int adcPin,
-                                     double calibrationOffsetC, const NtcConfig& ntcCfg)
-    : channelIndex_(channelIndex),
-      adcPin_(adcPin),
-      calibrationOffset_(calibrationOffsetC),
-      ntcConfig_(ntcCfg),
-      lastRawTempC_(NAN),
-      lastCalibratedTempC_(NAN),
-      lastAdcMv_(0) {}
-
-double TemperatureSensor::readTemperatureC(int adcMillivolts) {
-    lastAdcMv_ = adcMillivolts;
-    lastRawTempC_ = ntcMillivoltsToTempC(adcMillivolts, ntcConfig_);
-    lastCalibratedTempC_ = applyCalibrationOffset(lastRawTempC_, calibrationOffset_);
-    return lastCalibratedTempC_;
-}
-
-bool TemperatureSensor::isConnected() const {
-    return std::isfinite(lastCalibratedTempC_);
-}
 
 }  // namespace ungula::thermal
 

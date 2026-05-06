@@ -8,66 +8,65 @@
 
 namespace ungula::thermal {
 
+    struct NtcConfig {
+            double seriesResistorOhms;
+            double nominalResistanceOhms;
+            double betaCoefficient;
+            double referenceTempC;
+            uint16_t supplyVoltageMv;
+            double disconnectedMarginMv;
+            double minReasonableResistanceOhms;
+            double maxReasonableResistanceOhms;
+            double maxValidTempC;
+            double minValidTempC;
+    };
 
-struct NtcConfig {
-        double seriesResistorOhms;
-        double nominalResistanceOhms;
-        double betaCoefficient;
-        double referenceTempC;
-        uint16_t supplyVoltageMv;
-        double disconnectedMarginMv;
-        double minReasonableResistanceOhms;
-        double maxReasonableResistanceOhms;
-        double maxValidTempC;
-        double minValidTempC;
-};
+    double ntcMillivoltsToTempC(int millivolts, const NtcConfig& cfg);
+    double applyCalibrationOffset(double rawTempC, double offsetC);
 
-double ntcMillivoltsToTempC(int millivolts, const NtcConfig& cfg);
-double applyCalibrationOffset(double rawTempC, double offsetC);
+    class TemperatureSensor {
+        public:
+            TemperatureSensor(uint8_t channelIndex, int adcPin, double calibrationOffsetC,
+                              const NtcConfig& ntcCfg);
 
-class TemperatureSensor {
-    public:
-        TemperatureSensor(uint8_t channelIndex, int adcPin, double calibrationOffsetC,
-                          const NtcConfig& ntcCfg);
+            void setCalibrationOffset(double offsetC) {
+                calibrationOffset_ = offsetC;
+            }
+            double getCalibrationOffset() const {
+                return calibrationOffset_;
+            }
+            void setNtcConfig(const NtcConfig& cfg) {
+                ntcConfig_ = cfg;
+            }
 
-        void setCalibrationOffset(double offsetC) {
-            calibrationOffset_ = offsetC;
-        }
-        double getCalibrationOffset() const {
-            return calibrationOffset_;
-        }
-        void setNtcConfig(const NtcConfig& cfg) {
-            ntcConfig_ = cfg;
-        }
+            double readTemperatureC(int adcMillivolts);
+            bool isConnected() const;
 
-        double readTemperatureC(int adcMillivolts);
-        bool isConnected() const;
+            double getLastRawTempC() const {
+                return lastRawTempC_;
+            }
+            double getLastCalibratedTempC() const {
+                return lastCalibratedTempC_;
+            }
+            int getLastAdcMillivolts() const {
+                return lastAdcMv_;
+            }
+            uint8_t getChannelIndex() const {
+                return channelIndex_;
+            }
+            int getAdcPin() const {
+                return adcPin_;
+            }
 
-        double getLastRawTempC() const {
-            return lastRawTempC_;
-        }
-        double getLastCalibratedTempC() const {
-            return lastCalibratedTempC_;
-        }
-        int getLastAdcMillivolts() const {
-            return lastAdcMv_;
-        }
-        uint8_t getChannelIndex() const {
-            return channelIndex_;
-        }
-        int getAdcPin() const {
-            return adcPin_;
-        }
-
-    private:
-        uint8_t channelIndex_;
-        int adcPin_;
-        double calibrationOffset_;
-        NtcConfig ntcConfig_;
-        double lastRawTempC_;
-        double lastCalibratedTempC_;
-        int lastAdcMv_;
-};
+        private:
+            uint8_t channelIndex_;
+            int adcPin_;
+            double calibrationOffset_;
+            NtcConfig ntcConfig_;
+            double lastRawTempC_;
+            double lastCalibratedTempC_;
+            int lastAdcMv_;
+    };
 
 }  // namespace ungula::thermal
 
@@ -77,8 +76,7 @@ namespace ungula::thermal::adc {
     int computeMedianOfFive(int arr[5]);
 
     template <typename ReadFunc>
-    int readWithMedianFiltering(ReadFunc readOnce, uint8_t totalSamples,
-                                uint8_t groupSize) {
+    int readWithMedianFiltering(ReadFunc readOnce, uint8_t totalSamples, uint8_t groupSize) {
         int groups = (totalSamples > groupSize) ? (totalSamples / groupSize) : 1;
         long sum = 0;
 
