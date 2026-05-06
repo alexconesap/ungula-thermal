@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <thermal/fan_control.h>
+#include <ungula/thermal/fan_control.h>
 
 using namespace ungula::thermal;
 

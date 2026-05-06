@@ -11,7 +11,7 @@ All temperatures are Celsius. PWM duty is a `double` clamped to `[0, outputMax]`
 All examples assume:
 
 ```cpp
-#include <ungula_thermal.h>          // pulls all four headers
+#include <ungula/thermal.h>          // pulls all four headers
 using namespace ungula::thermal;
 ```
 
@@ -20,7 +20,7 @@ The library declares pure types. The host supplies time (`nowMs`, `dtSeconds`), 
 ### Use case: single heater channel, full pipeline
 
 ```cpp
-#include <ungula_thermal.h>
+#include <ungula/thermal.h>
 #include <Arduino.h>
 
 using namespace ungula::thermal;
@@ -107,7 +107,7 @@ When to use this: a single heated zone with NTC feedback and PWM driver. `Heater
 ### Use case: standalone PID for a non-heater plant
 
 ```cpp
-#include <thermal/pid_controller.h>
+#include <ungula/thermal/pid_controller.h>
 using namespace ungula::thermal;
 
 static PidConfig kPid = { /* same fields as above */ };
@@ -126,7 +126,7 @@ When to use this: any SISO control problem that fits the dual-mode (approach/hol
 ### Use case: N-channel fan controller with tachometry
 
 ```cpp
-#include <ungula_thermal.h>
+#include <ungula/thermal.h>
 #include <Arduino.h>
 
 using namespace ungula::thermal;
@@ -167,7 +167,7 @@ When to use this: any project that drives 4-wire PC fans, needs RPM feedback, or
 ### Use case: NTC ADC reading without HeaterChannel
 
 ```cpp
-#include <thermal/temp_sensor.h>
+#include <ungula/thermal/temp_sensor.h>
 using namespace ungula::thermal;
 
 static const NtcConfig kNtc = { /* see HeaterChannel example */ };
@@ -454,5 +454,5 @@ Proposed deepening (none of this exists yet):
 - Always handle `isSensorConnected() == false` by forcing the heater output to zero (or another host-defined SAFE value).
 - Always check `dtSeconds > 0` before calling `PidController::compute()` or `HeaterChannel::update()`.
 - For fans, `recordPulse()` is the only method safe to call from an ISR.
-- All temperatures used with this API are Celsius. Convert at the host boundary using `celsiusToFahrenheit()` / `fahrenheitToCelsius()` from `thermal/conversions.h`.
+- All temperatures used with this API are Celsius. Convert at the host boundary using `celsiusToFahrenheit()` / `fahrenheitToCelsius()` from `ungula/thermal/conversions.h`.
 - Do not invent a fault enum, a SAFE wrapper, or a unit-typed temperature — they do not exist yet (see "Recommended improvements").

@@ -34,10 +34,10 @@ add_executable(test_ungula_thermal
     test_temp_sensor.cpp
     test_heater_channel.cpp
     test_fan_control.cpp
-    ${LIB_THERMAL_SRC}/thermal/pid_controller.cpp
-    ${LIB_THERMAL_SRC}/thermal/heater_control.cpp
-    ${LIB_THERMAL_SRC}/thermal/temp_sensor.cpp
-    ${LIB_THERMAL_SRC}/thermal/fan_control.cpp
+    ${LIB_THERMAL_SRC}/ungula/thermal/pid_controller.cpp
+    ${LIB_THERMAL_SRC}/ungula/thermal/heater_control.cpp
+    ${LIB_THERMAL_SRC}/ungula/thermal/temp_sensor.cpp
+    ${LIB_THERMAL_SRC}/ungula/thermal/fan_control.cpp
 )
 target_link_libraries(test_ungula_thermal gtest_main)
 

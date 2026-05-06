@@ -2,7 +2,7 @@
 // Copyright (c) 2024-2026 Alex Conesa
 
 #include <gtest/gtest.h>
-#include <thermal/pid_controller.h>
+#include <ungula/thermal/pid_controller.h>
 
 #include <cmath>
 #include <vector>

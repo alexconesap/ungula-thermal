@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <thermal/temp_sensor.h>
+#include <ungula/thermal/temp_sensor.h>
 
 #include <cmath>
 

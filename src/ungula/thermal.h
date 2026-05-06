@@ -14,7 +14,7 @@
 // types and the C++ standard library. Libraries do not log directly.)
 
 // Thermal control
-#include "thermal/fan_control.h"
-#include "thermal/heater_control.h"
-#include "thermal/pid_controller.h"
-#include "thermal/temp_sensor.h"
+#include "ungula/thermal/fan_control.h"
+#include "ungula/thermal/heater_control.h"
+#include "ungula/thermal/pid_controller.h"
+#include "ungula/thermal/temp_sensor.h"

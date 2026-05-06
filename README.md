@@ -20,8 +20,8 @@ PID-based thermal control library for ESP32. Handles heater channels with adapti
 A complete heater + fan control loop:
 
 ```cpp
-#include <thermal/heater_control.h>
-#include <thermal/fan_control.h>
+#include <ungula/thermal/heater_control.h>
+#include <ungula/thermal/fan_control.h>
 
 using namespace ungula::thermal;
 
