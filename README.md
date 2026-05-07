@@ -58,6 +58,9 @@ void loop() {
 The heater channel reads an NTC thermistor, applies a calibration offset, and makes the result available:
 
 ```cpp
+#include <ungula/thermal.h>
+#include <emblogx/logger.h>
+
 int adcMv = analogReadMilliVolts(36);
 heater.update(adcMv, millis(), 0.020);
 
@@ -65,8 +68,8 @@ double tempC = heater.getTemperatureC();
 double tempF = heater.getTemperatureF();
 bool connected = heater.isSensorConnected();  // false if NTC is disconnected
 
-Serial.printf("Heater 0: %.1f C (%.1f F), sensor %s\n",
-              tempC, tempF, connected ? "OK" : "FAULT");
+log_info("Heater 0: %.1f C (%.1f F), sensor %s",
+         tempC, tempF, connected ? "OK" : "FAULT");
 ```
 
 The sensor returns NaN (and `isSensorConnected()` returns false) when something is wrong — voltage too low (disconnected), resistance out of range, or temperature outside [-40°C, 350°C].
@@ -76,6 +79,8 @@ The sensor returns NaN (and `isSensorConnected()` returns false) when something 
 The PID controller switches between aggressive "approach" gains (when far from setpoint) and conservative "hold" gains (when close). You set both:
 
 ```cpp
+#include <ungula/thermal.h>
+
 PidGains approach = {2.0, 0.05, 0.5};   // aggressive — get there fast
 PidGains hold     = {0.8, 0.02, 0.3};   // gentle — avoid overshoot
 
@@ -215,18 +220,24 @@ Suppose your target is 520 F (271.1 C) and you want the temperature to stay with
 **Step 1: Set `gainSwitchBandC` wide enough.** The gain switch band defines where hold mode activates. If it is 0.56 C (1 F), the system only enters hold mode when within 1 F. If oscillation peaks at ±5 F, the system is constantly bouncing between approach and hold modes, which makes things worse. Set `gainSwitchBandC` to at least 2.78 C (5 F) so hold mode covers the entire acceptable range:
 
 ```cpp
+#include <ungula/thermal.h>
+
 .gainSwitchBandC = 5.0 / 1.8   // 2.78 C = 5 F
 ```
 
 **Step 2: Reduce hold-mode Kp.** If the proportional gain is too high, even a small error produces a large output swing, causing oscillation. Start by cutting it in half. If oscillation decreases, keep going. If the temperature becomes sluggish, you went too far.
 
 ```cpp
+#include <ungula/thermal.h>
+
 .holdGains = {4.0, 0.15, 2.0}   // halved Kp from 8 to 4
 ```
 
 **Step 3: Reduce hold-mode Ki.** The integral term is often the primary cause of oscillation. It accumulates error over time and then overcorrects. Reduce Ki or tighten the Ki reduction bands:
 
 ```cpp
+#include <ungula/thermal.h>
+
 .holdGains = {4.0, 0.10, 2.0}           // reduced Ki from 0.15 to 0.10
 .kiReductionBandNarrowC = 5.0 / 1.8     // apply reduction within 5 F
 .kiReductionFactorNarrow = 0.3           // only 30% of Ki when very close
@@ -235,6 +246,8 @@ Suppose your target is 520 F (271.1 C) and you want the temperature to stay with
 **Step 4: Increase derivative if oscillation persists.** The derivative term damps oscillation by opposing rapid temperature changes. If the system oscillates symmetrically around the setpoint, increasing Kd can help:
 
 ```cpp
+#include <ungula/thermal.h>
+
 .holdGains = {4.0, 0.10, 4.0}   // increased Kd from 2 to 4
 ```
 
@@ -256,6 +269,8 @@ Make sure `derivativeEnableMarginC` is wide enough that the derivative is actual
 The duty governor limits how fast the PWM output can change, preventing current spikes on heater outputs:
 
 ```cpp
+#include <ungula/thermal.h>
+
 // Default: 8% up / 3% down per 100ms (of 0-255 range)
 // The governor is built into HeaterChannel — you don't need to manage it separately.
 // But if you want to use it standalone:
@@ -269,6 +284,9 @@ double smoothedDuty = governor.update(targetDuty, nowMs);
 The fan controller tracks RPM from tachometer pulses. Call `recordPulse` from a pin-change ISR:
 
 ```cpp
+#include <ungula/thermal.h>
+#include <emblogx/logger.h>
+
 // Template parameter N = number of fan channels in your project
 static constexpr uint8_t NUM_FANS = 4;
 FanController<NUM_FANS> fans;
@@ -287,8 +305,8 @@ void loop() {
         // RPM was recalculated (happens every FAN_SAMPLE_PERIOD_MS)
         for (uint8_t ch = 0; ch < NUM_FANS; ++ch) {
             auto state = fans.getChannelState(ch);
-            Serial.printf("Fan %d: %d RPM, %s\n", ch, state.rpm,
-                          state.connected ? "OK" : "DISCONNECTED");
+            log_info("Fan %d: %d RPM, %s", static_cast<int>(ch), state.rpm,
+                     state.connected ? "OK" : "DISCONNECTED");
         }
     }
 }
@@ -301,6 +319,8 @@ A fan counts as "connected" if its RPM is above 50. Fan PWM output is inverted b
 If you need PID control for something other than heaters:
 
 ```cpp
+#include <ungula/thermal.h>
+
 PidConfig cfg = {
     .approachGains = {1.0, 0.1, 0.3},
     .holdGains = {0.5, 0.05, 0.2},
@@ -342,6 +362,8 @@ The number of heater and fan channels is **not defined by the library**. Each ap
 This means you can use the same library for a 1-channel bench heater or an 8-channel industrial oven without any library changes.
 
 ```cpp
+#include <ungula/thermal.h>
+
 // A single-fan project
 FanController<1> fan;
 
