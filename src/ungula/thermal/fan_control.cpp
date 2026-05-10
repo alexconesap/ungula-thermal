@@ -4,11 +4,16 @@
 
 #include "fan_control.h"
 
-namespace ungula::thermal {
+namespace ungula::thermal
+{
 
-    FanPwmCalculator::FanPwmCalculator(const FanOutputConfig& config) : config_(config) {}
+    FanPwmCalculator::FanPwmCalculator(const FanOutputConfig &config)
+            : config_(config)
+    {
+    }
 
-    uint16_t FanPwmCalculator::calculateDuty(int speedPercent) const {
+    uint16_t FanPwmCalculator::calculateDuty(int speedPercent) const
+    {
         if (speedPercent < 0)
             speedPercent = 0;
         if (speedPercent > 100)
@@ -16,12 +21,11 @@ namespace ungula::thermal {
 
         uint16_t duty;
         if (config_.invertedOutput) {
-            duty = static_cast<uint16_t>(config_.pwmResolution -
-                                         (speedPercent * config_.pwmResolution / 100));
+            duty = static_cast<uint16_t>(config_.pwmResolution - (speedPercent * config_.pwmResolution / 100));
         } else {
             duty = static_cast<uint16_t>(speedPercent * config_.pwmResolution / 100);
         }
         return duty;
     }
 
-}  // namespace ungula::thermal
+} // namespace ungula::thermal

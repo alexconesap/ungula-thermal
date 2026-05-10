@@ -21,44 +21,46 @@ static constexpr double KI_REDUCTION_FACTOR_NARROW = 0.5;
 static constexpr double KI_REDUCTION_FACTOR_WIDE = 0.6;
 static constexpr double INTEGRAL_LIMIT = 500.0;
 
-static inline PidConfig testPidConfig() {
+static inline PidConfig testPidConfig()
+{
     return PidConfig{
-            .approachGains = {36.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-                              0.55 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-                              5.5 / FAHRENHEIT_TO_CELSIUS_FACTOR},
-            .holdGains = {16.0 / FAHRENHEIT_TO_CELSIUS_FACTOR, 0.32 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-                          5.5 / FAHRENHEIT_TO_CELSIUS_FACTOR},
-            .derivativeFilterAlpha = 0.25,
-            .derivativeFilterAlphaMin = 0.05,
-            .derivativeFilterAlphaMax = 1.0,
-            .setpointApproachThresholdC = SETPOINT_APPROACH_THRESHOLD_C,
-            .setpointApproachOffsetC = SETPOINT_APPROACH_OFFSET_C,
-            .gainSwitchBandC = GAIN_SWITCH_BAND_C,
-            .derivativeEnableMarginC = DERIVATIVE_ENABLE_MARGIN_C,
-            .kiReductionBandNarrowC = KI_REDUCTION_BAND_NARROW_C,
-            .kiReductionBandWideC = KI_REDUCTION_BAND_WIDE_C,
-            .kiReductionFactorNarrow = KI_REDUCTION_FACTOR_NARROW,
-            .kiReductionFactorWide = KI_REDUCTION_FACTOR_WIDE,
-            .integralLimit = INTEGRAL_LIMIT,
-            .antiwindupGain = 0.2,
-            .hysteresisAboveSetpointC = HYSTERESIS_ABOVE_SETPOINT_C,
-            .hysteresisBelowSetpointC = HYSTERESIS_BELOW_SETPOINT_C,
-            .outputMax = 255.0,
+        .approachGains = { 36.0 / FAHRENHEIT_TO_CELSIUS_FACTOR, 0.55 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+                           5.5 / FAHRENHEIT_TO_CELSIUS_FACTOR },
+        .holdGains = { 16.0 / FAHRENHEIT_TO_CELSIUS_FACTOR, 0.32 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+                       5.5 / FAHRENHEIT_TO_CELSIUS_FACTOR },
+        .derivativeFilterAlpha = 0.25,
+        .derivativeFilterAlphaMin = 0.05,
+        .derivativeFilterAlphaMax = 1.0,
+        .setpointApproachThresholdC = SETPOINT_APPROACH_THRESHOLD_C,
+        .setpointApproachOffsetC = SETPOINT_APPROACH_OFFSET_C,
+        .gainSwitchBandC = GAIN_SWITCH_BAND_C,
+        .derivativeEnableMarginC = DERIVATIVE_ENABLE_MARGIN_C,
+        .kiReductionBandNarrowC = KI_REDUCTION_BAND_NARROW_C,
+        .kiReductionBandWideC = KI_REDUCTION_BAND_WIDE_C,
+        .kiReductionFactorNarrow = KI_REDUCTION_FACTOR_NARROW,
+        .kiReductionFactorWide = KI_REDUCTION_FACTOR_WIDE,
+        .integralLimit = INTEGRAL_LIMIT,
+        .antiwindupGain = 0.2,
+        .hysteresisAboveSetpointC = HYSTERESIS_ABOVE_SETPOINT_C,
+        .hysteresisBelowSetpointC = HYSTERESIS_BELOW_SETPOINT_C,
+        .outputMax = 255.0,
     };
 }
 
 class PidControllerTest : public ::testing::Test {
-    protected:
-        PidController pid{testPidConfig()};
+protected:
+    PidController pid{ testPidConfig() };
 
-        void SetUp() override {
-            pid.reset();
-        }
+    void SetUp() override
+    {
+        pid.reset();
+    }
 };
 
 // --- Reset state ---
 
-TEST_F(PidControllerTest, ResetClearsState) {
+TEST_F(PidControllerTest, ResetClearsState)
+{
     pid.compute(100.0, 290.0, 0.02);
     pid.reset();
 
@@ -69,9 +71,10 @@ TEST_F(PidControllerTest, ResetClearsState) {
 
 // --- Proportional response ---
 
-TEST_F(PidControllerTest, ProportionalResponseWithZeroKiKd) {
-    PidGains approach = {10.0, 0.0, 0.0};
-    PidGains hold = {5.0, 0.0, 0.0};
+TEST_F(PidControllerTest, ProportionalResponseWithZeroKiKd)
+{
+    PidGains approach = { 10.0, 0.0, 0.0 };
+    PidGains hold = { 5.0, 0.0, 0.0 };
     pid.setGains(approach, hold);
 
     double setpoint = 290.0;
@@ -82,9 +85,10 @@ TEST_F(PidControllerTest, ProportionalResponseWithZeroKiKd) {
     EXPECT_FALSE(result.inHoldMode);
 }
 
-TEST_F(PidControllerTest, HoldModeGainsWhenCloseToSetpoint) {
-    PidGains approach = {10.0, 0.0, 0.0};
-    PidGains hold = {5.0, 0.0, 0.0};
+TEST_F(PidControllerTest, HoldModeGainsWhenCloseToSetpoint)
+{
+    PidGains approach = { 10.0, 0.0, 0.0 };
+    PidGains hold = { 5.0, 0.0, 0.0 };
     pid.setGains(approach, hold);
 
     double setpoint = 290.0;
@@ -96,8 +100,9 @@ TEST_F(PidControllerTest, HoldModeGainsWhenCloseToSetpoint) {
 
 // --- Integral accumulation ---
 
-TEST_F(PidControllerTest, IntegralAccumulatesWithPositiveError) {
-    PidGains gains = {0.0, 1.0, 0.0};
+TEST_F(PidControllerTest, IntegralAccumulatesWithPositiveError)
+{
+    PidGains gains = { 0.0, 1.0, 0.0 };
     pid.setGains(gains, gains);
 
     for (int i = 0; i < 50; i++) {
@@ -107,8 +112,9 @@ TEST_F(PidControllerTest, IntegralAccumulatesWithPositiveError) {
     EXPECT_GT(pid.getIntegral(), 0.0);
 }
 
-TEST_F(PidControllerTest, IntegralClampedAtLimit) {
-    PidGains gains = {0.0, 100.0, 0.0};
+TEST_F(PidControllerTest, IntegralClampedAtLimit)
+{
+    PidGains gains = { 0.0, 100.0, 0.0 };
     pid.setGains(gains, gains);
 
     for (int i = 0; i < 1000; i++) {
@@ -119,8 +125,9 @@ TEST_F(PidControllerTest, IntegralClampedAtLimit) {
     EXPECT_GE(pid.getIntegral(), -INTEGRAL_LIMIT);
 }
 
-TEST_F(PidControllerTest, NegativeErrorAccumulatesNegativeIntegral) {
-    PidGains gains = {0.0, 1.0, 0.0};
+TEST_F(PidControllerTest, NegativeErrorAccumulatesNegativeIntegral)
+{
+    PidGains gains = { 0.0, 1.0, 0.0 };
     pid.setGains(gains, gains);
 
     // Temperature above setpoint -> negative error
@@ -133,8 +140,9 @@ TEST_F(PidControllerTest, NegativeErrorAccumulatesNegativeIntegral) {
 
 // --- Derivative filtering ---
 
-TEST_F(PidControllerTest, DerivativeRespondToTempChange) {
-    PidGains gains = {0.0, 0.0, 10.0};
+TEST_F(PidControllerTest, DerivativeRespondToTempChange)
+{
+    PidGains gains = { 0.0, 0.0, 10.0 };
     pid.setGains(gains, gains);
 
     pid.compute(285.0, 290.0, 0.02);
@@ -144,8 +152,9 @@ TEST_F(PidControllerTest, DerivativeRespondToTempChange) {
     EXPECT_NE(result.derivativeCps, 0.0);
 }
 
-TEST_F(PidControllerTest, DerivativeZeroWithStableTemp) {
-    PidGains gains = {0.0, 0.0, 10.0};
+TEST_F(PidControllerTest, DerivativeZeroWithStableTemp)
+{
+    PidGains gains = { 0.0, 0.0, 10.0 };
     pid.setGains(gains, gains);
 
     // Several calls at the same temperature
@@ -157,8 +166,9 @@ TEST_F(PidControllerTest, DerivativeZeroWithStableTemp) {
     EXPECT_NEAR(result.derivativeCps, 0.0, 0.001);
 }
 
-TEST_F(PidControllerTest, NegativeDerivativeOnCooling) {
-    PidGains gains = {0.0, 0.0, 10.0};
+TEST_F(PidControllerTest, NegativeDerivativeOnCooling)
+{
+    PidGains gains = { 0.0, 0.0, 10.0 };
     pid.setGains(gains, gains);
 
     pid.compute(290.0, 290.0, 0.02);
@@ -170,7 +180,8 @@ TEST_F(PidControllerTest, NegativeDerivativeOnCooling) {
 
 // --- Invalid temperature ---
 
-TEST_F(PidControllerTest, InvalidTempReturnsZeroOutput) {
+TEST_F(PidControllerTest, InvalidTempReturnsZeroOutput)
+{
     pid.compute(200.0, 290.0, 0.02);
 
     auto result = pid.compute(NAN, 290.0, 0.02);
@@ -180,25 +191,29 @@ TEST_F(PidControllerTest, InvalidTempReturnsZeroOutput) {
     EXPECT_DOUBLE_EQ(result.dTerm, 0.0);
 }
 
-TEST_F(PidControllerTest, ExtremeNegativeTempReturnsZero) {
+TEST_F(PidControllerTest, ExtremeNegativeTempReturnsZero)
+{
     auto result = pid.compute(-300.0, 290.0, 0.02);
     EXPECT_DOUBLE_EQ(result.rawOutput, 0.0);
 }
 
-TEST_F(PidControllerTest, ExtremePosiveTempReturnsZero) {
+TEST_F(PidControllerTest, ExtremePosiveTempReturnsZero)
+{
     auto result = pid.compute(2000.0, 290.0, 0.02);
     EXPECT_DOUBLE_EQ(result.rawOutput, 0.0);
 }
 
-TEST_F(PidControllerTest, InfinityTempReturnsZero) {
+TEST_F(PidControllerTest, InfinityTempReturnsZero)
+{
     auto result = pid.compute(INFINITY, 290.0, 0.02);
     EXPECT_DOUBLE_EQ(result.rawOutput, 0.0);
 }
 
 // --- dt edge cases ---
 
-TEST_F(PidControllerTest, ZeroDtHandledGracefully) {
-    PidGains gains = {10.0, 1.0, 1.0};
+TEST_F(PidControllerTest, ZeroDtHandledGracefully)
+{
+    PidGains gains = { 10.0, 1.0, 1.0 };
     pid.setGains(gains, gains);
 
     auto result = pid.compute(280.0, 290.0, 0.0);
@@ -206,8 +221,9 @@ TEST_F(PidControllerTest, ZeroDtHandledGracefully) {
     EXPECT_GT(result.rawOutput, 0.0);
 }
 
-TEST_F(PidControllerTest, NegativeDtHandledGracefully) {
-    PidGains gains = {10.0, 1.0, 1.0};
+TEST_F(PidControllerTest, NegativeDtHandledGracefully)
+{
+    PidGains gains = { 10.0, 1.0, 1.0 };
     pid.setGains(gains, gains);
 
     auto result = pid.compute(280.0, 290.0, -0.5);
@@ -216,7 +232,8 @@ TEST_F(PidControllerTest, NegativeDtHandledGracefully) {
 
 // --- Setpoint reached hysteresis ---
 
-TEST_F(PidControllerTest, SetpointReachedLatchSetsAboveThreshold) {
+TEST_F(PidControllerTest, SetpointReachedLatchSetsAboveThreshold)
+{
     double setpoint = 290.0;
     EXPECT_FALSE(pid.hasReachedSetpoint());
 
@@ -227,7 +244,8 @@ TEST_F(PidControllerTest, SetpointReachedLatchSetsAboveThreshold) {
     EXPECT_TRUE(pid.hasReachedSetpoint());
 }
 
-TEST_F(PidControllerTest, SetpointLatchClearsBelowThreshold) {
+TEST_F(PidControllerTest, SetpointLatchClearsBelowThreshold)
+{
     double setpoint = 290.0;
 
     pid.compute(setpoint + HYSTERESIS_ABOVE_SETPOINT_C + 1.0, setpoint, 0.02);
@@ -237,7 +255,8 @@ TEST_F(PidControllerTest, SetpointLatchClearsBelowThreshold) {
     EXPECT_FALSE(pid.hasReachedSetpoint());
 }
 
-TEST_F(PidControllerTest, HysteresisBoundaryExactAbove) {
+TEST_F(PidControllerTest, HysteresisBoundaryExactAbove)
+{
     double setpoint = 290.0;
 
     // Exactly at the threshold should set the latch
@@ -245,7 +264,8 @@ TEST_F(PidControllerTest, HysteresisBoundaryExactAbove) {
     EXPECT_TRUE(pid.hasReachedSetpoint());
 }
 
-TEST_F(PidControllerTest, HysteresisBoundaryExactBelow) {
+TEST_F(PidControllerTest, HysteresisBoundaryExactBelow)
+{
     double setpoint = 290.0;
 
     // Set latch first
@@ -257,7 +277,8 @@ TEST_F(PidControllerTest, HysteresisBoundaryExactBelow) {
     EXPECT_FALSE(pid.hasReachedSetpoint());
 }
 
-TEST_F(PidControllerTest, HysteresisMultipleCycles) {
+TEST_F(PidControllerTest, HysteresisMultipleCycles)
+{
     double setpoint = 290.0;
 
     for (int cycle = 0; cycle < 3; cycle++) {
@@ -273,7 +294,8 @@ TEST_F(PidControllerTest, HysteresisMultipleCycles) {
 
 // --- Setpoint approach conditioning ---
 
-TEST_F(PidControllerTest, EffectiveSetpointOffsetWhenFarBelow) {
+TEST_F(PidControllerTest, EffectiveSetpointOffsetWhenFarBelow)
+{
     double setpoint = 290.0;
     double temp = 200.0;
 
@@ -282,7 +304,8 @@ TEST_F(PidControllerTest, EffectiveSetpointOffsetWhenFarBelow) {
     EXPECT_NEAR(result.effectiveSetpoint, setpoint + SETPOINT_APPROACH_OFFSET_C, 0.01);
 }
 
-TEST_F(PidControllerTest, EffectiveSetpointEqualsSetpointWhenClose) {
+TEST_F(PidControllerTest, EffectiveSetpointEqualsSetpointWhenClose)
+{
     double setpoint = 290.0;
     double temp = setpoint - SETPOINT_APPROACH_THRESHOLD_C * 0.5;
 
@@ -291,7 +314,8 @@ TEST_F(PidControllerTest, EffectiveSetpointEqualsSetpointWhenClose) {
     EXPECT_DOUBLE_EQ(result.effectiveSetpoint, setpoint);
 }
 
-TEST_F(PidControllerTest, EffectiveSetpointOffsetDisabledAfterReaching) {
+TEST_F(PidControllerTest, EffectiveSetpointOffsetDisabledAfterReaching)
+{
     double setpoint = 290.0;
 
     // First reach setpoint (sets latch)
@@ -301,19 +325,19 @@ TEST_F(PidControllerTest, EffectiveSetpointOffsetDisabledAfterReaching) {
     // Drop below approach threshold but stay within hysteresis band so latch stays set.
     // SETPOINT_APPROACH_THRESHOLD_C = 5.0/1.8 ≈ 2.78, HYSTERESIS_BELOW = 1.2/1.8 ≈ 0.67
     // Use temp = setpoint - 2.0 (below approach threshold, but above hysteresis clear point)
-    double temp =
-            setpoint - 2.0;  // 288 — still > setpoint - HYSTERESIS_BELOW(0.67)? No, 288 < 289.33
+    double temp = setpoint - 2.0; // 288 — still > setpoint - HYSTERESIS_BELOW(0.67)? No, 288 < 289.33
     // Actually hysteresis clear is at setpoint - 0.667 = 289.333. Temp 288 < 289.333 clears latch.
     // The approach threshold (2.78) > hysteresis band (0.667), so once latched and dropped below
     // the approach threshold, the latch will ALWAYS be cleared first.
     // This means the offset cannot be disabled by the latch for far-below temps.
     // The test verifies that a temp WITHIN the band (not far below) sees no offset.
-    temp = setpoint - SETPOINT_APPROACH_THRESHOLD_C * 0.5;  // Within approach zone, not far below
+    temp = setpoint - SETPOINT_APPROACH_THRESHOLD_C * 0.5; // Within approach zone, not far below
     auto result = pid.compute(temp, setpoint, 0.02);
-    EXPECT_DOUBLE_EQ(result.effectiveSetpoint, setpoint);  // Not far below, so no offset
+    EXPECT_DOUBLE_EQ(result.effectiveSetpoint, setpoint); // Not far below, so no offset
 }
 
-TEST_F(PidControllerTest, EffectiveSetpointOffsetReactivatesAfterLatchClears) {
+TEST_F(PidControllerTest, EffectiveSetpointOffsetReactivatesAfterLatchClears)
+{
     double setpoint = 290.0;
 
     // Reach, then drop far enough to clear latch
@@ -328,8 +352,9 @@ TEST_F(PidControllerTest, EffectiveSetpointOffsetReactivatesAfterLatchClears) {
 
 // --- Ki reduction zones ---
 
-TEST_F(PidControllerTest, KiReducedInNarrowBand) {
-    PidGains gains = {0.0, 10.0, 0.0};
+TEST_F(PidControllerTest, KiReducedInNarrowBand)
+{
+    PidGains gains = { 0.0, 10.0, 0.0 };
     pid.setGains(gains, gains);
 
     double setpoint = 290.0;
@@ -341,8 +366,9 @@ TEST_F(PidControllerTest, KiReducedInNarrowBand) {
     EXPECT_NEAR(result.iTerm, expectedKi * error * 1.0, 1.0);
 }
 
-TEST_F(PidControllerTest, KiReducedInWideBand) {
-    PidGains gains = {0.0, 10.0, 0.0};
+TEST_F(PidControllerTest, KiReducedInWideBand)
+{
+    PidGains gains = { 0.0, 10.0, 0.0 };
     pid.setGains(gains, gains);
 
     double setpoint = 290.0;
@@ -355,8 +381,9 @@ TEST_F(PidControllerTest, KiReducedInWideBand) {
     EXPECT_NEAR(result.iTerm, expectedKi * error * 1.0, 1.0);
 }
 
-TEST_F(PidControllerTest, KiFullOutsideReductionBands) {
-    PidGains gains = {0.0, 10.0, 0.0};
+TEST_F(PidControllerTest, KiFullOutsideReductionBands)
+{
+    PidGains gains = { 0.0, 10.0, 0.0 };
     pid.setGains(gains, gains);
 
     double setpoint = 290.0;
@@ -371,9 +398,10 @@ TEST_F(PidControllerTest, KiFullOutsideReductionBands) {
 
 // --- Gain switching boundary ---
 
-TEST_F(PidControllerTest, GainSwitchAtBoundary) {
-    PidGains approach = {20.0, 0.0, 0.0};
-    PidGains hold = {5.0, 0.0, 0.0};
+TEST_F(PidControllerTest, GainSwitchAtBoundary)
+{
+    PidGains approach = { 20.0, 0.0, 0.0 };
+    PidGains hold = { 5.0, 0.0, 0.0 };
     pid.setGains(approach, hold);
 
     double setpoint = 290.0;
@@ -389,9 +417,10 @@ TEST_F(PidControllerTest, GainSwitchAtBoundary) {
     EXPECT_TRUE(r2.inHoldMode);
 }
 
-TEST_F(PidControllerTest, NegativeErrorInHoldBand) {
-    PidGains approach = {20.0, 0.0, 0.0};
-    PidGains hold = {5.0, 0.0, 0.0};
+TEST_F(PidControllerTest, NegativeErrorInHoldBand)
+{
+    PidGains approach = { 20.0, 0.0, 0.0 };
+    PidGains hold = { 5.0, 0.0, 0.0 };
     pid.setGains(approach, hold);
 
     double setpoint = 290.0;
@@ -402,9 +431,10 @@ TEST_F(PidControllerTest, NegativeErrorInHoldBand) {
 
 // --- Anti-windup ---
 
-TEST_F(PidControllerTest, AntiWindupLimitsIntegralDuringSaturation) {
+TEST_F(PidControllerTest, AntiWindupLimitsIntegralDuringSaturation)
+{
     pid.setOutputLimits(0.0, 100.0);
-    PidGains gains = {0.0, 100.0, 0.0};
+    PidGains gains = { 0.0, 100.0, 0.0 };
     pid.setGains(gains, gains);
 
     // Large error for many iterations -> output saturates at max
@@ -421,9 +451,10 @@ TEST_F(PidControllerTest, AntiWindupLimitsIntegralDuringSaturation) {
     EXPECT_TRUE(std::isfinite(integral_saturated));
 }
 
-TEST_F(PidControllerTest, AntiWindupRecovery) {
+TEST_F(PidControllerTest, AntiWindupRecovery)
+{
     pid.setOutputLimits(0.0, 255.0);
-    PidGains gains = {10.0, 5.0, 0.0};
+    PidGains gains = { 10.0, 5.0, 0.0 };
     pid.setGains(gains, gains);
 
     // Saturate high
@@ -444,8 +475,9 @@ TEST_F(PidControllerTest, AntiWindupRecovery) {
 
 // --- Derivative conditional application ---
 
-TEST_F(PidControllerTest, DerivativeDisabledFarFromSetpoint) {
-    PidGains gains = {0.0, 0.0, 100.0};
+TEST_F(PidControllerTest, DerivativeDisabledFarFromSetpoint)
+{
+    PidGains gains = { 0.0, 0.0, 100.0 };
     pid.setGains(gains, gains);
 
     double setpoint = 290.0;
@@ -464,8 +496,9 @@ TEST_F(PidControllerTest, DerivativeDisabledFarFromSetpoint) {
     EXPECT_NEAR(result.dTerm, 0.0, 0.01);
 }
 
-TEST_F(PidControllerTest, DerivativeEnabledNearSetpoint) {
-    PidGains gains = {0.0, 0.0, 100.0};
+TEST_F(PidControllerTest, DerivativeEnabledNearSetpoint)
+{
+    PidGains gains = { 0.0, 0.0, 100.0 };
     pid.setGains(gains, gains);
 
     double setpoint = 290.0;
@@ -481,8 +514,9 @@ TEST_F(PidControllerTest, DerivativeEnabledNearSetpoint) {
     EXPECT_NE(result.dTerm, 0.0);
 }
 
-TEST_F(PidControllerTest, DerivativeEnabledAboveSetpoint) {
-    PidGains gains = {0.0, 0.0, 100.0};
+TEST_F(PidControllerTest, DerivativeEnabledAboveSetpoint)
+{
+    PidGains gains = { 0.0, 0.0, 100.0 };
     pid.setGains(gains, gains);
 
     double setpoint = 290.0;
@@ -500,7 +534,8 @@ TEST_F(PidControllerTest, DerivativeEnabledAboveSetpoint) {
 
 // --- Bumpless transfer ---
 
-TEST_F(PidControllerTest, BumplessTransferPreloadsIntegral) {
+TEST_F(PidControllerTest, BumplessTransferPreloadsIntegral)
+{
     double currentOutput = 150.0;
     double currentTemp = 285.0;
     double setpoint = 290.0;
@@ -511,8 +546,9 @@ TEST_F(PidControllerTest, BumplessTransferPreloadsIntegral) {
     EXPECT_DOUBLE_EQ(pid.getFilteredTemperature(), currentTemp);
 }
 
-TEST_F(PidControllerTest, BumplessTransferWithZeroKi) {
-    PidGains gains = {10.0, 0.0, 0.0};
+TEST_F(PidControllerTest, BumplessTransferWithZeroKi)
+{
+    PidGains gains = { 10.0, 0.0, 0.0 };
     pid.setGains(gains, gains);
 
     pid.initializeForBumplessTransfer(150.0, 285.0, 290.0);
@@ -520,9 +556,10 @@ TEST_F(PidControllerTest, BumplessTransferWithZeroKi) {
     EXPECT_NEAR(pid.getIntegral(), 0.0, 0.001);
 }
 
-TEST_F(PidControllerTest, BumplessTransferOutputContinuity) {
-    PidGains approach = {10.0, 2.0, 0.0};
-    PidGains hold = {5.0, 1.0, 0.0};
+TEST_F(PidControllerTest, BumplessTransferOutputContinuity)
+{
+    PidGains approach = { 10.0, 2.0, 0.0 };
+    PidGains hold = { 5.0, 1.0, 0.0 };
     pid.setGains(approach, hold);
 
     double currentOutput = 120.0;
@@ -539,7 +576,8 @@ TEST_F(PidControllerTest, BumplessTransferOutputContinuity) {
 
 // --- Simulated warmup ramp ---
 
-TEST_F(PidControllerTest, WarmupRampReducesOutputAsApproachingSetpoint) {
+TEST_F(PidControllerTest, WarmupRampReducesOutputAsApproachingSetpoint)
+{
     double setpoint = 290.0;
     double dt = 0.02;
 
@@ -559,9 +597,10 @@ TEST_F(PidControllerTest, WarmupRampReducesOutputAsApproachingSetpoint) {
 
 // --- Output clamping ---
 
-TEST_F(PidControllerTest, OutputClampedToLimits) {
+TEST_F(PidControllerTest, OutputClampedToLimits)
+{
     pid.setOutputLimits(0.0, 100.0);
-    PidGains gains = {1000.0, 0.0, 0.0};
+    PidGains gains = { 1000.0, 0.0, 0.0 };
     pid.setGains(gains, gains);
 
     auto result = pid.compute(100.0, 290.0, 0.02);
@@ -569,9 +608,10 @@ TEST_F(PidControllerTest, OutputClampedToLimits) {
     EXPECT_GE(result.rawOutput, 0.0);
 }
 
-TEST_F(PidControllerTest, OutputClampedAtZeroForNegativeError) {
+TEST_F(PidControllerTest, OutputClampedAtZeroForNegativeError)
+{
     pid.setOutputLimits(0.0, 255.0);
-    PidGains gains = {1000.0, 0.0, 0.0};
+    PidGains gains = { 1000.0, 0.0, 0.0 };
     pid.setGains(gains, gains);
 
     // Temperature way above setpoint -> negative P term -> clamped at 0
@@ -581,8 +621,9 @@ TEST_F(PidControllerTest, OutputClampedAtZeroForNegativeError) {
 
 // --- Filter alpha ---
 
-TEST_F(PidControllerTest, HighAlphaFollowsFaster) {
-    PidGains gains = {0.0, 0.0, 10.0};
+TEST_F(PidControllerTest, HighAlphaFollowsFaster)
+{
+    PidGains gains = { 0.0, 0.0, 10.0 };
 
     PidController fast(testPidConfig()), slow(testPidConfig());
     fast.setGains(gains, gains);

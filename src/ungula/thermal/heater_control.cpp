@@ -9,7 +9,8 @@
 
 using namespace ungula::core::util::math;
 
-namespace ungula::thermal {
+namespace ungula::thermal
+{
 
     // Safe mid-range default so the PID has a sane reference before the first
     // real setpoint arrives, avoiding full-power output at startup.
@@ -17,16 +18,23 @@ namespace ungula::thermal {
 
     // ---- DutyGovernor ----
 
-    DutyGovernor::DutyGovernor(const GovernorConfig& cfg)
-        : config_(cfg), currentDuty_(0.0), lastUpdateMs_(0), initialized_(false) {}
+    DutyGovernor::DutyGovernor(const GovernorConfig &cfg)
+            : config_(cfg)
+            , currentDuty_(0.0)
+            , lastUpdateMs_(0)
+            , initialized_(false)
+    {
+    }
 
-    void DutyGovernor::reset(double initialDuty) {
+    void DutyGovernor::reset(double initialDuty)
+    {
         currentDuty_ = clamp(initialDuty, 0.0, static_cast<double>(config_.pwmResolution));
         lastUpdateMs_ = 0;
         initialized_ = false;
     }
 
-    double DutyGovernor::update(double targetDuty, uint32_t nowMs) {
+    double DutyGovernor::update(double targetDuty, uint32_t nowMs)
+    {
         targetDuty = clamp(targetDuty, 0.0, static_cast<double>(config_.pwmResolution));
 
         if (!initialized_) {
@@ -59,9 +67,13 @@ namespace ungula::thermal {
 
     // ---- DutyFloorCalculator ----
 
-    DutyFloorCalculator::DutyFloorCalculator(const DutyFloorConfig& cfg) : config_(cfg) {}
+    DutyFloorCalculator::DutyFloorCalculator(const DutyFloorConfig &cfg)
+            : config_(cfg)
+    {
+    }
 
-    double DutyFloorCalculator::normalizeSetpoint(double setpointC) const {
+    double DutyFloorCalculator::normalizeSetpoint(double setpointC) const
+    {
         double range = config_.setpointMaxC - config_.setpointMinC;
         if (range <= 0.0) {
             return 0.5;
@@ -70,8 +82,8 @@ namespace ungula::thermal {
         return t < 0.0 ? 0.0 : (t > 1.0 ? 1.0 : t);
     }
 
-    double DutyFloorCalculator::computeFloor(double tempC, double setpointC,
-                                             FloorReason& reasonOut) const {
+    double DutyFloorCalculator::computeFloor(double tempC, double setpointC, FloorReason &reasonOut) const
+    {
         reasonOut = FloorReason::None;
         double maxFloor = 0.0;
 
@@ -106,7 +118,8 @@ namespace ungula::thermal {
         return maxFloor * config_.pwmResolution;
     }
 
-    double DutyFloorCalculator::computeFloorBelowSetpoint(double errorC, double setpointC) const {
+    double DutyFloorCalculator::computeFloorBelowSetpoint(double errorC, double setpointC) const
+    {
         double spNorm = normalizeSetpoint(setpointC);
 
         double floorFar = lerp(config_.belowSpFarLow, config_.belowSpFarHigh, spNorm);
@@ -137,8 +150,8 @@ namespace ungula::thermal {
         return lerp(floorClose, floorFar, t);
     }
 
-    double DutyFloorCalculator::computeFloorAboveSetpoint(double errorAboveC,
-                                                          double setpointC) const {
+    double DutyFloorCalculator::computeFloorAboveSetpoint(double errorAboveC, double setpointC) const
+    {
         double spNorm = normalizeSetpoint(setpointC);
         double holdFloor = lerp(config_.atSetpointLow, config_.atSetpointHigh, spNorm);
 
@@ -155,17 +168,21 @@ namespace ungula::thermal {
         return lerp(baseFloor, config_.aboveSpAtMaxError, t);
     }
 
-    double DutyFloorCalculator::computeHoldFloor(double setpointC) const {
+    double DutyFloorCalculator::computeHoldFloor(double setpointC) const
+    {
         double spNorm = normalizeSetpoint(setpointC);
         return lerp(config_.atSetpointLow, config_.atSetpointHigh, spNorm);
     }
 
     // ---- RateLimiter ----
 
-    RateLimiter::RateLimiter(const RateLimiterConfig& cfg) : config_(cfg) {}
+    RateLimiter::RateLimiter(const RateLimiterConfig &cfg)
+            : config_(cfg)
+    {
+    }
 
-    double RateLimiter::applyLimit(double targetDuty, double derivativeCps,
-                                   bool& limitActiveOut) const {
+    double RateLimiter::applyLimit(double targetDuty, double derivativeCps, bool &limitActiveOut) const
+    {
         limitActiveOut = false;
 
         if (derivativeCps <= config_.thresholdCps) {
@@ -191,28 +208,32 @@ namespace ungula::thermal {
 
     // ---- HeaterChannel ----
 
-    HeaterChannel::HeaterChannel(uint8_t index, int thermistorPin, int heaterPin,
-                                 double calibrationOffsetC, const HeaterChannelConfig& cfg)
-        : index_(index),
-          heaterPin_(heaterPin),
-          setpointC_(kDefaultSafeSetpointC),
-          setpointTrimC_(0.0),
-          approachGains_(cfg.pid.approachGains),
-          holdGains_(cfg.pid.holdGains),
-          sensor_(index, thermistorPin, calibrationOffsetC, cfg.ntc),
-          pid_(cfg.pid),
-          governor_(cfg.governor),
-          floorCalc_(cfg.floor),
-          rateLimiter_(cfg.rateLimiter),
-          state_{} {}
+    HeaterChannel::HeaterChannel(uint8_t index, int thermistorPin, int heaterPin, double calibrationOffsetC,
+                                 const HeaterChannelConfig &cfg)
+            : index_(index)
+            , heaterPin_(heaterPin)
+            , setpointC_(kDefaultSafeSetpointC)
+            , setpointTrimC_(0.0)
+            , approachGains_(cfg.pid.approachGains)
+            , holdGains_(cfg.pid.holdGains)
+            , sensor_(index, thermistorPin, calibrationOffsetC, cfg.ntc)
+            , pid_(cfg.pid)
+            , governor_(cfg.governor)
+            , floorCalc_(cfg.floor)
+            , rateLimiter_(cfg.rateLimiter)
+            , state_{}
+    {
+    }
 
-    void HeaterChannel::resetControl() {
+    void HeaterChannel::resetControl()
+    {
         pid_.reset();
         governor_.reset(0.0);
         state_ = {};
     }
 
-    void HeaterChannel::initializeBumpless(double currentDuty) {
+    void HeaterChannel::initializeBumpless(double currentDuty)
+    {
         double tempC = sensor_.getLastCalibratedTempC();
         if (ungula::core::util::temp::isValidTemperature(tempC)) {
             pid_.initializeForBumplessTransfer(currentDuty, tempC, getEffectiveSetpointC());
@@ -220,11 +241,13 @@ namespace ungula::thermal {
         }
     }
 
-    double HeaterChannel::getTemperatureF() const {
+    double HeaterChannel::getTemperatureF() const
+    {
         return ungula::core::util::temp::celsiusToFahrenheit(getTemperatureC());
     }
 
-    HeaterChannelState HeaterChannel::update(int adcMillivolts, uint32_t nowMs, double dtSeconds) {
+    HeaterChannelState HeaterChannel::update(int adcMillivolts, uint32_t nowMs, double dtSeconds)
+    {
         double tempC = sensor_.readTemperatureC(adcMillivolts);
         double setpoint = getEffectiveSetpointC();
 
@@ -246,8 +269,7 @@ namespace ungula::thermal {
         state_.derivativeCps = pidOut.derivativeCps;
 
         bool rateLimited = false;
-        double rateLimitedOutput =
-                rateLimiter_.applyLimit(pidOut.rawOutput, pidOut.derivativeCps, rateLimited);
+        double rateLimitedOutput = rateLimiter_.applyLimit(pidOut.rawOutput, pidOut.derivativeCps, rateLimited);
         state_.rateLimitActive = rateLimited;
 
         FloorReason floorReason;
@@ -268,4 +290,4 @@ namespace ungula::thermal {
         return state_;
     }
 
-}  // namespace ungula::thermal
+} // namespace ungula::thermal

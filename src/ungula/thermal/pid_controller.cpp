@@ -6,32 +6,37 @@
 
 #include <cmath>
 
-namespace ungula::thermal {
+namespace ungula::thermal
+{
 
-    static inline double clamp(double v, double lo, double hi) {
+    static inline double clamp(double v, double lo, double hi)
+    {
         return v < lo ? lo : (v > hi ? hi : v);
     }
 
-    static inline bool isValidTemp(double t) {
+    static inline bool isValidTemp(double t)
+    {
         return std::isfinite(t) && t > -200.0 && t < 1800.0;
     }
 
-    PidController::PidController(const PidConfig& config)
-        : config_(config),
-          integral_(0.0),
-          filteredTemp_(NAN),
-          lastFilteredTemp_(NAN),
-          lastDerivativeCps_(0.0),
-          derivativeAlpha_(config.derivativeFilterAlpha),
-          outputMin_(0.0),
-          outputMax_(config.outputMax),
-          initialized_(false),
-          reachedSetpointLatch_(false) {
+    PidController::PidController(const PidConfig &config)
+            : config_(config)
+            , integral_(0.0)
+            , filteredTemp_(NAN)
+            , lastFilteredTemp_(NAN)
+            , lastDerivativeCps_(0.0)
+            , derivativeAlpha_(config.derivativeFilterAlpha)
+            , outputMin_(0.0)
+            , outputMax_(config.outputMax)
+            , initialized_(false)
+            , reachedSetpointLatch_(false)
+    {
         approachGains_ = config.approachGains;
         holdGains_ = config.holdGains;
     }
 
-    void PidController::reset() {
+    void PidController::reset()
+    {
         integral_ = 0.0;
         filteredTemp_ = NAN;
         lastFilteredTemp_ = NAN;
@@ -40,23 +45,25 @@ namespace ungula::thermal {
         reachedSetpointLatch_ = false;
     }
 
-    void PidController::setGains(const PidGains& approach, const PidGains& hold) {
+    void PidController::setGains(const PidGains &approach, const PidGains &hold)
+    {
         approachGains_ = approach;
         holdGains_ = hold;
     }
 
-    void PidController::setDerivativeFilterAlpha(double alpha) {
-        derivativeAlpha_ =
-                clamp(alpha, config_.derivativeFilterAlphaMin, config_.derivativeFilterAlphaMax);
+    void PidController::setDerivativeFilterAlpha(double alpha)
+    {
+        derivativeAlpha_ = clamp(alpha, config_.derivativeFilterAlphaMin, config_.derivativeFilterAlphaMax);
     }
 
-    void PidController::setOutputLimits(double minOutput, double maxOutput) {
+    void PidController::setOutputLimits(double minOutput, double maxOutput)
+    {
         outputMin_ = minOutput;
         outputMax_ = maxOutput;
     }
 
-    void PidController::initializeForBumplessTransfer(double currentOutput, double currentTemp,
-                                                      double setpoint) {
+    void PidController::initializeForBumplessTransfer(double currentOutput, double currentTemp, double setpoint)
+    {
         filteredTemp_ = currentTemp;
         lastFilteredTemp_ = currentTemp;
         lastDerivativeCps_ = 0.0;
@@ -75,7 +82,8 @@ namespace ungula::thermal {
         initialized_ = true;
     }
 
-    double PidController::computeEffectiveSetpoint(double processValue, double setpoint) const {
+    double PidController::computeEffectiveSetpoint(double processValue, double setpoint) const
+    {
         bool farBelowSetpoint = (processValue < setpoint - config_.setpointApproachThresholdC);
         bool notYetReached = !reachedSetpointLatch_;
 
@@ -85,12 +93,14 @@ namespace ungula::thermal {
         return setpoint;
     }
 
-    PidGains PidController::selectGains(double error) const {
+    PidGains PidController::selectGains(double error) const
+    {
         bool inHoldBand = std::fabs(error) <= config_.gainSwitchBandC;
         return inHoldBand ? holdGains_ : approachGains_;
     }
 
-    double PidController::applyKiReduction(double ki, double error) const {
+    double PidController::applyKiReduction(double ki, double error) const
+    {
         double absError = std::fabs(error);
 
         if (absError < config_.kiReductionBandNarrowC) {
@@ -101,7 +111,8 @@ namespace ungula::thermal {
         return ki;
     }
 
-    PidOutput PidController::compute(double processValue, double setpoint, double dtSeconds) {
+    PidOutput PidController::compute(double processValue, double setpoint, double dtSeconds)
+    {
         PidOutput result = {};
 
         if (!isValidTemp(processValue)) {
@@ -146,9 +157,8 @@ namespace ungula::thermal {
         integral_ = clamp(integral_, -config_.integralLimit, config_.integralLimit);
         result.iTerm = kiEffective * integral_;
 
-        bool shouldApplyDerivative =
-                (processValue >= result.effectiveSetpoint) ||
-                (std::fabs(error) <= config_.gainSwitchBandC + config_.derivativeEnableMarginC);
+        bool shouldApplyDerivative = (processValue >= result.effectiveSetpoint) ||
+                                     (std::fabs(error) <= config_.gainSwitchBandC + config_.derivativeEnableMarginC);
         result.dTerm = shouldApplyDerivative ? (gains.kd * (-dTemp)) : 0.0;
 
         double output = result.pTerm + result.iTerm + result.dTerm;
@@ -156,8 +166,7 @@ namespace ungula::thermal {
         double outputSaturated = clamp(output, outputMin_, outputMax_);
 
         if (output != outputSaturated) {
-            double antiwindupCorrection =
-                    (outputSaturated - output) * config_.antiwindupGain * dtSeconds;
+            double antiwindupCorrection = (outputSaturated - output) * config_.antiwindupGain * dtSeconds;
             integral_ += antiwindupCorrection;
             integral_ = clamp(integral_, -config_.integralLimit, config_.integralLimit);
         }
@@ -168,4 +177,4 @@ namespace ungula::thermal {
         return result;
     }
 
-}  // namespace ungula::thermal
+} // namespace ungula::thermal

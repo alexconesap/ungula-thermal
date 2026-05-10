@@ -6,9 +6,11 @@
 
 #include <cmath>
 
-namespace ungula::thermal {
+namespace ungula::thermal
+{
 
-    double ntcMillivoltsToTempC(int millivolts, const NtcConfig& cfg) {
+    double ntcMillivoltsToTempC(int millivolts, const NtcConfig &cfg)
+    {
         double vm = static_cast<double>(millivolts);
         double vcc = static_cast<double>(cfg.supplyVoltageMv);
 
@@ -23,8 +25,7 @@ namespace ungula::thermal {
 
         double rNtc = cfg.seriesResistorOhms * (vm / denominator);
 
-        if (!std::isfinite(rNtc) || rNtc < cfg.minReasonableResistanceOhms ||
-            rNtc > cfg.maxReasonableResistanceOhms) {
+        if (!std::isfinite(rNtc) || rNtc < cfg.minReasonableResistanceOhms || rNtc > cfg.maxReasonableResistanceOhms) {
             return NAN;
         }
 
@@ -49,39 +50,46 @@ namespace ungula::thermal {
         return tempC;
     }
 
-    double applyCalibrationOffset(double rawTempC, double offsetC) {
+    double applyCalibrationOffset(double rawTempC, double offsetC)
+    {
         if (!std::isfinite(rawTempC)) {
             return NAN;
         }
         return rawTempC + offsetC;
     }
 
-    TemperatureSensor::TemperatureSensor(uint8_t channelIndex, int adcPin,
-                                         double calibrationOffsetC, const NtcConfig& ntcCfg)
-        : channelIndex_(channelIndex),
-          adcPin_(adcPin),
-          calibrationOffset_(calibrationOffsetC),
-          ntcConfig_(ntcCfg),
-          lastRawTempC_(NAN),
-          lastCalibratedTempC_(NAN),
-          lastAdcMv_(0) {}
+    TemperatureSensor::TemperatureSensor(uint8_t channelIndex, int adcPin, double calibrationOffsetC,
+                                         const NtcConfig &ntcCfg)
+            : channelIndex_(channelIndex)
+            , adcPin_(adcPin)
+            , calibrationOffset_(calibrationOffsetC)
+            , ntcConfig_(ntcCfg)
+            , lastRawTempC_(NAN)
+            , lastCalibratedTempC_(NAN)
+            , lastAdcMv_(0)
+    {
+    }
 
-    double TemperatureSensor::readTemperatureC(int adcMillivolts) {
+    double TemperatureSensor::readTemperatureC(int adcMillivolts)
+    {
         lastAdcMv_ = adcMillivolts;
         lastRawTempC_ = ntcMillivoltsToTempC(adcMillivolts, ntcConfig_);
         lastCalibratedTempC_ = applyCalibrationOffset(lastRawTempC_, calibrationOffset_);
         return lastCalibratedTempC_;
     }
 
-    bool TemperatureSensor::isConnected() const {
+    bool TemperatureSensor::isConnected() const
+    {
         return std::isfinite(lastCalibratedTempC_);
     }
 
-}  // namespace ungula::thermal
+} // namespace ungula::thermal
 
-namespace ungula::thermal::adc {
+namespace ungula::thermal::adc
+{
 
-    void sortFiveElements(int arr[5]) {
+    void sortFiveElements(int arr[5])
+    {
         for (int i = 0; i < 5; ++i) {
             for (int j = i + 1; j < 5; ++j) {
                 if (arr[j] < arr[i]) {
@@ -93,9 +101,10 @@ namespace ungula::thermal::adc {
         }
     }
 
-    int computeMedianOfFive(int arr[5]) {
+    int computeMedianOfFive(int arr[5])
+    {
         sortFiveElements(arr);
         return arr[2];
     }
 
-}  // namespace ungula::thermal::adc
+} // namespace ungula::thermal::adc

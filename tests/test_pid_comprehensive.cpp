@@ -15,26 +15,27 @@ using namespace ungula::thermal;
 
 static constexpr double F2C = 1.8;
 
-static PidConfig productionConfig() {
+static PidConfig productionConfig()
+{
     return PidConfig{
-            .approachGains = {36.0 / F2C, 0.55 / F2C, 5.5 / F2C},
-            .holdGains = {16.0 / F2C, 0.32 / F2C, 5.5 / F2C},
-            .derivativeFilterAlpha = 0.25,
-            .derivativeFilterAlphaMin = 0.05,
-            .derivativeFilterAlphaMax = 1.0,
-            .setpointApproachThresholdC = 5.0 / F2C,
-            .setpointApproachOffsetC = 2.0 / F2C,
-            .gainSwitchBandC = 1.0 / F2C,
-            .derivativeEnableMarginC = 0.5 / F2C,
-            .kiReductionBandNarrowC = 1.0 / F2C,
-            .kiReductionBandWideC = 2.0 / F2C,
-            .kiReductionFactorNarrow = 0.5,
-            .kiReductionFactorWide = 0.6,
-            .integralLimit = 500.0,
-            .antiwindupGain = 0.2,
-            .hysteresisAboveSetpointC = 0.8 / F2C,
-            .hysteresisBelowSetpointC = 1.2 / F2C,
-            .outputMax = 255.0,
+        .approachGains = { 36.0 / F2C, 0.55 / F2C, 5.5 / F2C },
+        .holdGains = { 16.0 / F2C, 0.32 / F2C, 5.5 / F2C },
+        .derivativeFilterAlpha = 0.25,
+        .derivativeFilterAlphaMin = 0.05,
+        .derivativeFilterAlphaMax = 1.0,
+        .setpointApproachThresholdC = 5.0 / F2C,
+        .setpointApproachOffsetC = 2.0 / F2C,
+        .gainSwitchBandC = 1.0 / F2C,
+        .derivativeEnableMarginC = 0.5 / F2C,
+        .kiReductionBandNarrowC = 1.0 / F2C,
+        .kiReductionBandWideC = 2.0 / F2C,
+        .kiReductionFactorNarrow = 0.5,
+        .kiReductionFactorWide = 0.6,
+        .integralLimit = 500.0,
+        .antiwindupGain = 0.2,
+        .hysteresisAboveSetpointC = 0.8 / F2C,
+        .hysteresisBelowSetpointC = 1.2 / F2C,
+        .outputMax = 255.0,
     };
 }
 
@@ -43,18 +44,19 @@ static PidConfig productionConfig() {
 // ============================================================================
 
 class PidConfigInjection : public ::testing::Test {
-    protected:
-        PidController pid{productionConfig()};
+protected:
+    PidController pid{ productionConfig() };
 };
 
-TEST_F(PidConfigInjection, ApproachGainsAreUsedFarFromSetpoint) {
+TEST_F(PidConfigInjection, ApproachGainsAreUsedFarFromSetpoint)
+{
     // P-only: set Ki=Kd=0 to isolate Kp
-    PidGains approach = {20.0, 0.0, 0.0};
-    PidGains hold = {5.0, 0.0, 0.0};
+    PidGains approach = { 20.0, 0.0, 0.0 };
+    PidGains hold = { 5.0, 0.0, 0.0 };
     pid.setGains(approach, hold);
 
     double sp = 300.0;
-    double temp = 200.0;  // far from setpoint -> approach mode
+    double temp = 200.0; // far from setpoint -> approach mode
     auto r = pid.compute(temp, sp, 0.02);
 
     // Error = effectiveSetpoint - temp. Far below = approach offset applied.
@@ -67,29 +69,32 @@ TEST_F(PidConfigInjection, ApproachGainsAreUsedFarFromSetpoint) {
     EXPECT_NEAR(r.rawOutput, expectedOutput, 0.01);
 }
 
-TEST_F(PidConfigInjection, HoldGainsAreUsedCloseToSetpoint) {
-    PidGains approach = {20.0, 0.0, 0.0};
-    PidGains hold = {5.0, 0.0, 0.0};
+TEST_F(PidConfigInjection, HoldGainsAreUsedCloseToSetpoint)
+{
+    PidGains approach = { 20.0, 0.0, 0.0 };
+    PidGains hold = { 5.0, 0.0, 0.0 };
     pid.setGains(approach, hold);
 
     double sp = 300.0;
-    double temp = sp - 0.2;  // within gainSwitchBandC (~0.556)
+    double temp = sp - 0.2; // within gainSwitchBandC (~0.556)
     auto r = pid.compute(temp, sp, 0.02);
 
     EXPECT_TRUE(r.inHoldMode);
     EXPECT_NEAR(r.pTerm, 5.0 * (sp - temp), 0.01);
 }
 
-TEST_F(PidConfigInjection, OutputMaxFromConfigIsRespected) {
-    PidGains gains = {1000.0, 0.0, 0.0};
+TEST_F(PidConfigInjection, OutputMaxFromConfigIsRespected)
+{
+    PidGains gains = { 1000.0, 0.0, 0.0 };
     pid.setGains(gains, gains);
 
     auto r = pid.compute(100.0, 300.0, 0.02);
     EXPECT_DOUBLE_EQ(r.rawOutput, 255.0);
 }
 
-TEST_F(PidConfigInjection, IntegralLimitFromConfigIsRespected) {
-    PidGains gains = {0.0, 100.0, 0.0};
+TEST_F(PidConfigInjection, IntegralLimitFromConfigIsRespected)
+{
+    PidGains gains = { 0.0, 100.0, 0.0 };
     pid.setGains(gains, gains);
 
     for (int i = 0; i < 500; i++) {
@@ -100,7 +105,8 @@ TEST_F(PidConfigInjection, IntegralLimitFromConfigIsRespected) {
     EXPECT_GE(pid.getIntegral(), -productionConfig().integralLimit);
 }
 
-TEST_F(PidConfigInjection, DerivativeAlphaClampedByConfig) {
+TEST_F(PidConfigInjection, DerivativeAlphaClampedByConfig)
+{
     pid.setDerivativeFilterAlpha(999.0);
     EXPECT_DOUBLE_EQ(pid.getDerivativeFilterAlpha(), productionConfig().derivativeFilterAlphaMax);
 
@@ -108,7 +114,8 @@ TEST_F(PidConfigInjection, DerivativeAlphaClampedByConfig) {
     EXPECT_DOUBLE_EQ(pid.getDerivativeFilterAlpha(), productionConfig().derivativeFilterAlphaMin);
 }
 
-TEST_F(PidConfigInjection, HysteresisThresholdsFromConfig) {
+TEST_F(PidConfigInjection, HysteresisThresholdsFromConfig)
+{
     double sp = 300.0;
     auto cfg = productionConfig();
 
@@ -129,7 +136,8 @@ TEST_F(PidConfigInjection, HysteresisThresholdsFromConfig) {
     EXPECT_FALSE(pid.hasReachedSetpoint());
 }
 
-TEST_F(PidConfigInjection, SetpointApproachOffsetFromConfig) {
+TEST_F(PidConfigInjection, SetpointApproachOffsetFromConfig)
+{
     auto cfg = productionConfig();
     double sp = 300.0;
     double farTemp = sp - cfg.setpointApproachThresholdC - 10.0;
@@ -138,9 +146,10 @@ TEST_F(PidConfigInjection, SetpointApproachOffsetFromConfig) {
     EXPECT_NEAR(r.effectiveSetpoint, sp + cfg.setpointApproachOffsetC, 0.001);
 }
 
-TEST_F(PidConfigInjection, KiReductionBandsFromConfig) {
+TEST_F(PidConfigInjection, KiReductionBandsFromConfig)
+{
     auto cfg = productionConfig();
-    PidGains gains = {0.0, 10.0, 0.0};
+    PidGains gains = { 0.0, 10.0, 0.0 };
     pid.setGains(gains, gains);
 
     double sp = 300.0;
@@ -168,33 +177,35 @@ TEST_F(PidConfigInjection, KiReductionBandsFromConfig) {
 // ============================================================================
 
 // Use a simple config where we can compute expected values by hand
-static PidConfig simpleConfig() {
+static PidConfig simpleConfig()
+{
     return PidConfig{
-            .approachGains = {10.0, 0.5, 2.0},
-            .holdGains = {5.0, 0.25, 2.0},
-            .derivativeFilterAlpha = 1.0,  // no filtering, instant response
-            .derivativeFilterAlphaMin = 0.05,
-            .derivativeFilterAlphaMax = 1.0,
-            .setpointApproachThresholdC = 5.0,
-            .setpointApproachOffsetC = 2.0,
-            .gainSwitchBandC = 1.0,
-            .derivativeEnableMarginC = 0.5,
-            .kiReductionBandNarrowC = 1.0,
-            .kiReductionBandWideC = 2.0,
-            .kiReductionFactorNarrow = 0.5,
-            .kiReductionFactorWide = 0.6,
-            .integralLimit = 500.0,
-            .antiwindupGain = 0.2,
-            .hysteresisAboveSetpointC = 1.0,
-            .hysteresisBelowSetpointC = 1.0,
-            .outputMax = 255.0,
+        .approachGains = { 10.0, 0.5, 2.0 },
+        .holdGains = { 5.0, 0.25, 2.0 },
+        .derivativeFilterAlpha = 1.0, // no filtering, instant response
+        .derivativeFilterAlphaMin = 0.05,
+        .derivativeFilterAlphaMax = 1.0,
+        .setpointApproachThresholdC = 5.0,
+        .setpointApproachOffsetC = 2.0,
+        .gainSwitchBandC = 1.0,
+        .derivativeEnableMarginC = 0.5,
+        .kiReductionBandNarrowC = 1.0,
+        .kiReductionBandWideC = 2.0,
+        .kiReductionFactorNarrow = 0.5,
+        .kiReductionFactorWide = 0.6,
+        .integralLimit = 500.0,
+        .antiwindupGain = 0.2,
+        .hysteresisAboveSetpointC = 1.0,
+        .hysteresisBelowSetpointC = 1.0,
+        .outputMax = 255.0,
     };
 }
 
-TEST(PidDeterministic, PTermOnlyFirstCall) {
+TEST(PidDeterministic, PTermOnlyFirstCall)
+{
     auto cfg = simpleConfig();
-    cfg.approachGains = {10.0, 0.0, 0.0};
-    cfg.holdGains = {5.0, 0.0, 0.0};
+    cfg.approachGains = { 10.0, 0.0, 0.0 };
+    cfg.holdGains = { 5.0, 0.0, 0.0 };
     PidController pid(cfg);
 
     // First call: temp far below setpoint -> approach mode
@@ -207,10 +218,11 @@ TEST(PidDeterministic, PTermOnlyFirstCall) {
     EXPECT_DOUBLE_EQ(r.rawOutput, 255.0);
 }
 
-TEST(PidDeterministic, PTermInHoldBand) {
+TEST(PidDeterministic, PTermInHoldBand)
+{
     auto cfg = simpleConfig();
-    cfg.approachGains = {10.0, 0.0, 0.0};
-    cfg.holdGains = {5.0, 0.0, 0.0};
+    cfg.approachGains = { 10.0, 0.0, 0.0 };
+    cfg.holdGains = { 5.0, 0.0, 0.0 };
     PidController pid(cfg);
 
     // temp close to setpoint: |error| < gainSwitchBandC (1.0)
@@ -223,19 +235,20 @@ TEST(PidDeterministic, PTermInHoldBand) {
     EXPECT_NEAR(r.rawOutput, 2.5, 0.01);
 }
 
-TEST(PidDeterministic, IntegralAccumulationExact) {
+TEST(PidDeterministic, IntegralAccumulationExact)
+{
     auto cfg = simpleConfig();
-    cfg.approachGains = {0.0, 1.0, 0.0};
-    cfg.holdGains = {0.0, 1.0, 0.0};
-    cfg.setpointApproachThresholdC = 100.0;  // push threshold far so no offset
-    cfg.kiReductionBandNarrowC = 0.0;        // disable Ki reduction
+    cfg.approachGains = { 0.0, 1.0, 0.0 };
+    cfg.holdGains = { 0.0, 1.0, 0.0 };
+    cfg.setpointApproachThresholdC = 100.0; // push threshold far so no offset
+    cfg.kiReductionBandNarrowC = 0.0; // disable Ki reduction
     cfg.kiReductionBandWideC = 0.0;
     PidController pid(cfg);
 
     double sp = 100.0;
     double temp = 90.0;
     double dt = 0.5;
-    double error = sp - temp;  // 10.0
+    double error = sp - temp; // 10.0
 
     // After 1 call: integral = error * dt = 10 * 0.5 = 5
     // iTerm = Ki * integral = 1.0 * 5 = 5
@@ -249,12 +262,13 @@ TEST(PidDeterministic, IntegralAccumulationExact) {
     EXPECT_NEAR(r2.iTerm, 10.0, 0.01);
 }
 
-TEST(PidDeterministic, DerivativeTermExactWithAlpha1) {
+TEST(PidDeterministic, DerivativeTermExactWithAlpha1)
+{
     // alpha=1.0 means filteredTemp = processValue (no filtering)
     auto cfg = simpleConfig();
-    cfg.approachGains = {0.0, 0.0, 10.0};
-    cfg.holdGains = {0.0, 0.0, 10.0};
-    cfg.gainSwitchBandC = 100.0;  // everything in hold band -> D always enabled
+    cfg.approachGains = { 0.0, 0.0, 10.0 };
+    cfg.holdGains = { 0.0, 0.0, 10.0 };
+    cfg.gainSwitchBandC = 100.0; // everything in hold band -> D always enabled
     cfg.derivativeEnableMarginC = 100.0;
     PidController pid(cfg);
 
@@ -269,14 +283,15 @@ TEST(PidDeterministic, DerivativeTermExactWithAlpha1) {
     auto r = pid.compute(96.0, sp, dt);
     EXPECT_NEAR(r.derivativeCps, 50.0, 0.01);
     EXPECT_NEAR(r.dTerm, -500.0, 0.1);
-    EXPECT_DOUBLE_EQ(r.rawOutput, 0.0);  // clamped at outputMin
+    EXPECT_DOUBLE_EQ(r.rawOutput, 0.0); // clamped at outputMin
 }
 
-TEST(PidDeterministic, DerivativeFilteringWithLowAlpha) {
+TEST(PidDeterministic, DerivativeFilteringWithLowAlpha)
+{
     auto cfg = simpleConfig();
     cfg.derivativeFilterAlpha = 0.1;
-    cfg.approachGains = {0.0, 0.0, 1.0};
-    cfg.holdGains = {0.0, 0.0, 1.0};
+    cfg.approachGains = { 0.0, 0.0, 1.0 };
+    cfg.holdGains = { 0.0, 0.0, 1.0 };
     cfg.gainSwitchBandC = 100.0;
     cfg.derivativeEnableMarginC = 100.0;
     PidController pid(cfg);
@@ -301,26 +316,26 @@ TEST(PidDeterministic, DerivativeFilteringWithLowAlpha) {
 // ============================================================================
 
 class PidTrajectoryTest : public ::testing::Test {
-    protected:
-        PidController pid{productionConfig()};
-        static constexpr double DT = 0.02;   // 50Hz like production
-        static constexpr double SP = 315.0;  // ~600F, typical catheter reflow setpoint in Celsius
+protected:
+    PidController pid{ productionConfig() };
+    static constexpr double DT = 0.02; // 50Hz like production
+    static constexpr double SP = 315.0; // ~600F, typical catheter reflow setpoint in Celsius
 
-        struct TrajectoryPoint {
-                double temperature;
-                // Expected invariants checked per-point
-        };
+    struct TrajectoryPoint {
+        double temperature;
+        // Expected invariants checked per-point
+    };
 };
 
-TEST_F(PidTrajectoryTest, HeatingRampFromColdToSetpoint) {
+TEST_F(PidTrajectoryTest, HeatingRampFromColdToSetpoint)
+{
     // Simulate a realistic heating ramp: 25C -> 315C over ~300 steps
     // (20ms per step = 6 seconds of simulated time)
     double temps[] = {
-            25.0,  30.0,  38.0,  48.0,  60.0,  75.0,  92.0,  110.0, 130.0, 150.0,
-            168.0, 185.0, 200.0, 215.0, 228.0, 240.0, 250.0, 258.0, 265.0, 272.0,
-            278.0, 283.0, 288.0, 292.0, 296.0, 299.0, 301.5, 303.5, 305.0, 306.5,
-            308.0, 309.2, 310.3, 311.2, 312.0, 312.6, 313.1, 313.5, 313.9, 314.2,
-            314.4, 314.6, 314.8, 315.0, 315.3, 315.5, 315.3, 315.0, 315.1, 315.0,
+        25.0,  30.0,  38.0,  48.0,  60.0,  75.0,  92.0,  110.0, 130.0, 150.0, 168.0, 185.0, 200.0,
+        215.0, 228.0, 240.0, 250.0, 258.0, 265.0, 272.0, 278.0, 283.0, 288.0, 292.0, 296.0, 299.0,
+        301.5, 303.5, 305.0, 306.5, 308.0, 309.2, 310.3, 311.2, 312.0, 312.6, 313.1, 313.5, 313.9,
+        314.2, 314.4, 314.6, 314.8, 315.0, 315.3, 315.5, 315.3, 315.0, 315.1, 315.0,
     };
     int n = sizeof(temps) / sizeof(temps[0]);
 
@@ -363,64 +378,65 @@ TEST_F(PidTrajectoryTest, HeatingRampFromColdToSetpoint) {
     EXPECT_TRUE(latchSetAtSomePoint) << "Should reach setpoint during ramp";
 }
 
-TEST_F(PidTrajectoryTest, OscillationAroundSetpoint) {
+TEST_F(PidTrajectoryTest, OscillationAroundSetpoint)
+{
     // Simulate temperature oscillating around setpoint with realistic thermal noise
     // This is the most important test: verifies PID behavior during steady-state
     double oscillation[] = {
-            // First, approach setpoint
-            300.0,
-            305.0,
-            310.0,
-            313.0,
-            314.5,
-            315.0,
-            // Now oscillate: +-0.3C (typical thermal noise)
-            315.2,
-            315.1,
-            314.8,
-            314.7,
-            314.9,
-            315.1,
-            315.3,
-            315.2,
-            315.0,
-            314.8,
-            314.7,
-            314.9,
-            315.0,
-            315.2,
-            315.3,
-            315.1,
-            314.9,
-            314.8,
-            315.0,
-            315.1,
-            315.0,
-            314.9,
-            315.0,
-            315.1,
-            315.0,
-            314.9,
-            315.0,
-            // Wider swing: +-0.5C
-            315.5,
-            315.3,
-            315.0,
-            314.6,
-            314.5,
-            314.7,
-            315.0,
-            315.4,
-            315.5,
-            315.2,
-            314.9,
-            314.6,
-            314.8,
-            315.1,
-            315.3,
-            315.0,
-            314.8,
-            315.0,
+        // First, approach setpoint
+        300.0,
+        305.0,
+        310.0,
+        313.0,
+        314.5,
+        315.0,
+        // Now oscillate: +-0.3C (typical thermal noise)
+        315.2,
+        315.1,
+        314.8,
+        314.7,
+        314.9,
+        315.1,
+        315.3,
+        315.2,
+        315.0,
+        314.8,
+        314.7,
+        314.9,
+        315.0,
+        315.2,
+        315.3,
+        315.1,
+        314.9,
+        314.8,
+        315.0,
+        315.1,
+        315.0,
+        314.9,
+        315.0,
+        315.1,
+        315.0,
+        314.9,
+        315.0,
+        // Wider swing: +-0.5C
+        315.5,
+        315.3,
+        315.0,
+        314.6,
+        314.5,
+        314.7,
+        315.0,
+        315.4,
+        315.5,
+        315.2,
+        314.9,
+        314.6,
+        314.8,
+        315.1,
+        315.3,
+        315.0,
+        314.8,
+        315.0,
     };
     int n = sizeof(oscillation) / sizeof(oscillation[0]);
 
@@ -438,44 +454,45 @@ TEST_F(PidTrajectoryTest, OscillationAroundSetpoint) {
     // (not pegged at 0 or 255). Check the oscillation phase (steps 6+).
     for (int i = 6; i < n; i++) {
         EXPECT_LT(outputs[i].rawOutput, 200.0)
-                << "Step " << i << ": output too high during oscillation, PID not settling";
+            << "Step " << i << ": output too high during oscillation, PID not settling";
     }
 
     // The integral should be bounded and not wind up
     EXPECT_LE(std::fabs(pid.getIntegral()), productionConfig().integralLimit);
 }
 
-TEST_F(PidTrajectoryTest, CoolingAndReheating) {
+TEST_F(PidTrajectoryTest, CoolingAndReheating)
+{
     // Start at setpoint, cool down (heater off or fan on), then reheat
     double trajectory[] = {
-            // At setpoint
-            315.0,
-            315.0,
-            315.0,
-            // Cooling phase (gradual)
-            314.5,
-            313.8,
-            312.5,
-            311.0,
-            309.0,
-            306.0,
-            303.0,
-            300.0,
-            // Reheating
-            300.5,
-            302.0,
-            304.0,
-            306.0,
-            308.0,
-            310.0,
-            312.0,
-            313.5,
-            314.0,
-            314.5,
-            314.8,
-            315.0,
-            315.1,
-            315.0,
+        // At setpoint
+        315.0,
+        315.0,
+        315.0,
+        // Cooling phase (gradual)
+        314.5,
+        313.8,
+        312.5,
+        311.0,
+        309.0,
+        306.0,
+        303.0,
+        300.0,
+        // Reheating
+        300.5,
+        302.0,
+        304.0,
+        306.0,
+        308.0,
+        310.0,
+        312.0,
+        313.5,
+        314.0,
+        314.5,
+        314.8,
+        315.0,
+        315.1,
+        315.0,
     };
     int n = sizeof(trajectory) / sizeof(trajectory[0]);
 
@@ -498,11 +515,11 @@ TEST_F(PidTrajectoryTest, CoolingAndReheating) {
         prevOutput = r.rawOutput;
     }
 
-    EXPECT_TRUE(outputIncreasedDuringCooling)
-            << "PID should increase output when temperature drops below setpoint";
+    EXPECT_TRUE(outputIncreasedDuringCooling) << "PID should increase output when temperature drops below setpoint";
 }
 
-TEST_F(PidTrajectoryTest, SetpointChangeFromLowToHigh) {
+TEST_F(PidTrajectoryTest, SetpointChangeFromLowToHigh)
+{
     // Start controlling at 200C, then change setpoint to 315C
     double sp1 = 200.0;
     double sp2 = 315.0;
@@ -517,14 +534,15 @@ TEST_F(PidTrajectoryTest, SetpointChangeFromLowToHigh) {
     // Change setpoint - output should jump high
     auto r = pid.compute(200.0, sp2, DT);
     EXPECT_GT(r.rawOutput, stable.rawOutput);
-    EXPECT_FALSE(r.inHoldMode);  // now far from new setpoint
+    EXPECT_FALSE(r.inHoldMode); // now far from new setpoint
 }
 
-TEST_F(PidTrajectoryTest, LongRunStabilityWithRealisticNoise) {
+TEST_F(PidTrajectoryTest, LongRunStabilityWithRealisticNoise)
+{
     // Run 5000 iterations (100s simulated) with small random-like noise
     // using a deterministic pattern
     double temp = 315.0;
-    double noisePattern[] = {0.1, -0.05, 0.15, -0.12, 0.08, -0.03, 0.2, -0.18, 0.05, -0.07};
+    double noisePattern[] = { 0.1, -0.05, 0.15, -0.12, 0.08, -0.03, 0.2, -0.18, 0.05, -0.07 };
     int patternLen = sizeof(noisePattern) / sizeof(noisePattern[0]);
 
     for (int i = 0; i < 5000; i++) {
@@ -546,13 +564,14 @@ TEST_F(PidTrajectoryTest, LongRunStabilityWithRealisticNoise) {
 // ============================================================================
 
 class PidErrorConditions : public ::testing::Test {
-    protected:
-        PidController pid{productionConfig()};
-        static constexpr double DT = 0.02;
-        static constexpr double SP = 315.0;
+protected:
+    PidController pid{ productionConfig() };
+    static constexpr double DT = 0.02;
+    static constexpr double SP = 315.0;
 };
 
-TEST_F(PidErrorConditions, NanInputResetsStateAndReturnsZero) {
+TEST_F(PidErrorConditions, NanInputResetsStateAndReturnsZero)
+{
     // Build up some state (close to setpoint so anti-windup doesn't reverse sign)
     for (int i = 0; i < 20; i++) {
         pid.compute(314.0, SP, DT);
@@ -569,20 +588,23 @@ TEST_F(PidErrorConditions, NanInputResetsStateAndReturnsZero) {
     EXPECT_FALSE(pid.hasReachedSetpoint());
 }
 
-TEST_F(PidErrorConditions, InfinityInputResetsState) {
+TEST_F(PidErrorConditions, InfinityInputResetsState)
+{
     pid.compute(280.0, SP, DT);
     auto r = pid.compute(INFINITY, SP, DT);
     EXPECT_DOUBLE_EQ(r.rawOutput, 0.0);
     EXPECT_DOUBLE_EQ(pid.getIntegral(), 0.0);
 }
 
-TEST_F(PidErrorConditions, NegativeInfinityInputResetsState) {
+TEST_F(PidErrorConditions, NegativeInfinityInputResetsState)
+{
     pid.compute(280.0, SP, DT);
     auto r = pid.compute(-INFINITY, SP, DT);
     EXPECT_DOUBLE_EQ(r.rawOutput, 0.0);
 }
 
-TEST_F(PidErrorConditions, ExtremeColdReadingResetsState) {
+TEST_F(PidErrorConditions, ExtremeColdReadingResetsState)
+{
     // isValidTemp rejects < -200
     pid.compute(280.0, SP, DT);
     auto r = pid.compute(-201.0, SP, DT);
@@ -590,14 +612,16 @@ TEST_F(PidErrorConditions, ExtremeColdReadingResetsState) {
     EXPECT_DOUBLE_EQ(pid.getIntegral(), 0.0);
 }
 
-TEST_F(PidErrorConditions, ExtremeHotReadingResetsState) {
+TEST_F(PidErrorConditions, ExtremeHotReadingResetsState)
+{
     // isValidTemp rejects >= 1800
     pid.compute(280.0, SP, DT);
     auto r = pid.compute(1800.0, SP, DT);
     EXPECT_DOUBLE_EQ(r.rawOutput, 0.0);
 }
 
-TEST_F(PidErrorConditions, BoundaryValidTemperatures) {
+TEST_F(PidErrorConditions, BoundaryValidTemperatures)
+{
     // -200 is valid (just barely)
     auto r1 = pid.compute(-200.0, SP, DT);
     EXPECT_TRUE(std::isfinite(r1.rawOutput));
@@ -615,7 +639,8 @@ TEST_F(PidErrorConditions, BoundaryValidTemperatures) {
     EXPECT_TRUE(std::isfinite(r3.rawOutput));
 }
 
-TEST_F(PidErrorConditions, SensorDropoutAndRecovery) {
+TEST_F(PidErrorConditions, SensorDropoutAndRecovery)
+{
     // Simulate: good readings -> sensor fails (NaN) -> good readings resume
     // Verify PID recovers gracefully
 
@@ -644,7 +669,8 @@ TEST_F(PidErrorConditions, SensorDropoutAndRecovery) {
     }
 }
 
-TEST_F(PidErrorConditions, MultipleSensorDropouts) {
+TEST_F(PidErrorConditions, MultipleSensorDropouts)
+{
     // Rapid fail/recover cycles
     for (int cycle = 0; cycle < 10; cycle++) {
         // Good reading
@@ -662,19 +688,22 @@ TEST_F(PidErrorConditions, MultipleSensorDropouts) {
     EXPECT_GT(rFinal.rawOutput, 0.0);
 }
 
-TEST_F(PidErrorConditions, ZeroDtClampedToMinimum) {
+TEST_F(PidErrorConditions, ZeroDtClampedToMinimum)
+{
     // dt=0 is changed to 0.001 internally
     auto r = pid.compute(300.0, SP, 0.0);
     EXPECT_TRUE(std::isfinite(r.rawOutput));
     EXPECT_GT(r.rawOutput, 0.0);
 }
 
-TEST_F(PidErrorConditions, NegativeDtClampedToMinimum) {
+TEST_F(PidErrorConditions, NegativeDtClampedToMinimum)
+{
     auto r = pid.compute(300.0, SP, -5.0);
     EXPECT_TRUE(std::isfinite(r.rawOutput));
 }
 
-TEST_F(PidErrorConditions, VeryLargeDtDoesNotProduceInfinity) {
+TEST_F(PidErrorConditions, VeryLargeDtDoesNotProduceInfinity)
+{
     auto r = pid.compute(300.0, SP, 1000.0);
     EXPECT_TRUE(std::isfinite(r.rawOutput));
     EXPECT_GE(r.rawOutput, 0.0);
@@ -682,14 +711,16 @@ TEST_F(PidErrorConditions, VeryLargeDtDoesNotProduceInfinity) {
     EXPECT_LE(pid.getIntegral(), productionConfig().integralLimit);
 }
 
-TEST_F(PidErrorConditions, VerySmallDt) {
+TEST_F(PidErrorConditions, VerySmallDt)
+{
     auto r = pid.compute(300.0, SP, 0.0000001);
     EXPECT_TRUE(std::isfinite(r.rawOutput));
     EXPECT_GE(r.rawOutput, 0.0);
     EXPECT_LE(r.rawOutput, 255.0);
 }
 
-TEST_F(PidErrorConditions, SuddenTemperatureSpike) {
+TEST_F(PidErrorConditions, SuddenTemperatureSpike)
+{
     // Simulate sudden spike: 315 -> 500 -> 315
     for (int i = 0; i < 10; i++) {
         pid.compute(315.0, SP, DT);
@@ -704,7 +735,8 @@ TEST_F(PidErrorConditions, SuddenTemperatureSpike) {
     EXPECT_TRUE(std::isfinite(rReturn.rawOutput));
 }
 
-TEST_F(PidErrorConditions, SuddenTemperatureDrop) {
+TEST_F(PidErrorConditions, SuddenTemperatureDrop)
+{
     // Simulate sensor reading dropping to near-zero
     for (int i = 0; i < 10; i++) {
         pid.compute(315.0, SP, DT);
@@ -715,19 +747,22 @@ TEST_F(PidErrorConditions, SuddenTemperatureDrop) {
     EXPECT_DOUBLE_EQ(rDrop.rawOutput, 255.0);
 }
 
-TEST_F(PidErrorConditions, SetpointAtZero) {
+TEST_F(PidErrorConditions, SetpointAtZero)
+{
     auto r = pid.compute(100.0, 0.0, DT);
     EXPECT_TRUE(std::isfinite(r.rawOutput));
     // temp > sp -> output should be 0
     EXPECT_DOUBLE_EQ(r.rawOutput, 0.0);
 }
 
-TEST_F(PidErrorConditions, SetpointNegative) {
+TEST_F(PidErrorConditions, SetpointNegative)
+{
     auto r = pid.compute(-100.0, -50.0, DT);
     EXPECT_TRUE(std::isfinite(r.rawOutput));
 }
 
-TEST_F(PidErrorConditions, ProcessValueEqualsSetpointExactly) {
+TEST_F(PidErrorConditions, ProcessValueEqualsSetpointExactly)
+{
     auto r = pid.compute(SP, SP, DT);
     EXPECT_TRUE(std::isfinite(r.rawOutput));
     // Error = 0 -> P = 0, I barely accumulates, D = 0
@@ -738,14 +773,15 @@ TEST_F(PidErrorConditions, ProcessValueEqualsSetpointExactly) {
 // Section 5: Different config / correction values
 // ============================================================================
 
-TEST(PidDifferentConfigs, AggressiveVsConservativeGains) {
+TEST(PidDifferentConfigs, AggressiveVsConservativeGains)
+{
     auto aggressive = productionConfig();
-    aggressive.approachGains = {40.0, 2.0, 8.0};
-    aggressive.holdGains = {20.0, 1.0, 8.0};
+    aggressive.approachGains = { 40.0, 2.0, 8.0 };
+    aggressive.holdGains = { 20.0, 1.0, 8.0 };
 
     auto conservative = productionConfig();
-    conservative.approachGains = {5.0, 0.1, 1.0};
-    conservative.holdGains = {2.0, 0.05, 1.0};
+    conservative.approachGains = { 5.0, 0.1, 1.0 };
+    conservative.holdGains = { 2.0, 0.05, 1.0 };
 
     PidController pidA(aggressive);
     PidController pidC(conservative);
@@ -762,16 +798,17 @@ TEST(PidDifferentConfigs, AggressiveVsConservativeGains) {
     EXPECT_GT(std::fabs(rA.pTerm), std::fabs(rC.pTerm));
 }
 
-TEST(PidDifferentConfigs, HighVsLowOutputMax) {
+TEST(PidDifferentConfigs, HighVsLowOutputMax)
+{
     auto cfg100 = simpleConfig();
     cfg100.outputMax = 100.0;
-    cfg100.approachGains = {100.0, 0.0, 0.0};
-    cfg100.holdGains = {100.0, 0.0, 0.0};
+    cfg100.approachGains = { 100.0, 0.0, 0.0 };
+    cfg100.holdGains = { 100.0, 0.0, 0.0 };
 
     auto cfg1000 = simpleConfig();
     cfg1000.outputMax = 1000.0;
-    cfg1000.approachGains = {100.0, 0.0, 0.0};
-    cfg1000.holdGains = {100.0, 0.0, 0.0};
+    cfg1000.approachGains = { 100.0, 0.0, 0.0 };
+    cfg1000.holdGains = { 100.0, 0.0, 0.0 };
 
     PidController pid100(cfg100);
     PidController pid1000(cfg1000);
@@ -783,22 +820,23 @@ TEST(PidDifferentConfigs, HighVsLowOutputMax) {
     EXPECT_GT(r1000.rawOutput, 100.0);
 }
 
-TEST(PidDifferentConfigs, NarrowVsWideGainSwitchBand) {
+TEST(PidDifferentConfigs, NarrowVsWideGainSwitchBand)
+{
     auto narrow = simpleConfig();
     narrow.gainSwitchBandC = 0.1;
-    narrow.approachGains = {20.0, 0.0, 0.0};
-    narrow.holdGains = {2.0, 0.0, 0.0};
+    narrow.approachGains = { 20.0, 0.0, 0.0 };
+    narrow.holdGains = { 2.0, 0.0, 0.0 };
 
     auto wide = simpleConfig();
     wide.gainSwitchBandC = 10.0;
-    wide.approachGains = {20.0, 0.0, 0.0};
-    wide.holdGains = {2.0, 0.0, 0.0};
+    wide.approachGains = { 20.0, 0.0, 0.0 };
+    wide.holdGains = { 2.0, 0.0, 0.0 };
 
     PidController pidN(narrow);
     PidController pidW(wide);
 
     double sp = 300.0;
-    double temp = sp - 0.5;  // 0.5C from setpoint
+    double temp = sp - 0.5; // 0.5C from setpoint
 
     auto rN = pidN.compute(temp, sp, 0.02);
     auto rW = pidW.compute(temp, sp, 0.02);
@@ -810,7 +848,8 @@ TEST(PidDifferentConfigs, NarrowVsWideGainSwitchBand) {
     EXPECT_GT(rN.rawOutput, rW.rawOutput);
 }
 
-TEST(PidDifferentConfigs, NarrowVsWideHysteresis) {
+TEST(PidDifferentConfigs, NarrowVsWideHysteresis)
+{
     auto narrow = simpleConfig();
     narrow.hysteresisAboveSetpointC = 0.1;
     narrow.hysteresisBelowSetpointC = 0.1;
@@ -827,21 +866,22 @@ TEST(PidDifferentConfigs, NarrowVsWideHysteresis) {
     // Both should latch at sp + their respective threshold
     pidN.compute(sp + 0.1, sp, 0.02);
     pidW.compute(sp + 0.1, sp, 0.02);
-    EXPECT_TRUE(pidN.hasReachedSetpoint());   // 0.1 >= 0.1
-    EXPECT_FALSE(pidW.hasReachedSetpoint());  // 0.1 < 5.0
+    EXPECT_TRUE(pidN.hasReachedSetpoint()); // 0.1 >= 0.1
+    EXPECT_FALSE(pidW.hasReachedSetpoint()); // 0.1 < 5.0
 
     pidW.compute(sp + 5.0, sp, 0.02);
     EXPECT_TRUE(pidW.hasReachedSetpoint());
 }
 
-TEST(PidDifferentConfigs, ZeroAntiwindupGain) {
+TEST(PidDifferentConfigs, ZeroAntiwindupGain)
+{
     auto cfg = simpleConfig();
     cfg.antiwindupGain = 0.0;
-    cfg.approachGains = {0.0, 10.0, 0.0};
-    cfg.holdGains = {0.0, 10.0, 0.0};
+    cfg.approachGains = { 0.0, 10.0, 0.0 };
+    cfg.holdGains = { 0.0, 10.0, 0.0 };
     PidController pid(cfg);
 
-    pid.setOutputLimits(0.0, 50.0);  // Low limit to saturate quickly
+    pid.setOutputLimits(0.0, 50.0); // Low limit to saturate quickly
 
     // With no anti-windup, integral should hit the integralLimit
     for (int i = 0; i < 200; i++) {
@@ -852,19 +892,20 @@ TEST(PidDifferentConfigs, ZeroAntiwindupGain) {
     EXPECT_NEAR(pid.getIntegral(), cfg.integralLimit, 1.0);
 }
 
-TEST(PidDifferentConfigs, StrongAntiwindupReducesIntegralMoreThanWeak) {
+TEST(PidDifferentConfigs, StrongAntiwindupReducesIntegralMoreThanWeak)
+{
     // Compare two PIDs: one with strong anti-windup, one with none.
     // Strong anti-windup should keep the integral smaller after the
     // output saturates and we then cross the setpoint.
     auto cfgStrong = simpleConfig();
     cfgStrong.antiwindupGain = 1.0;
-    cfgStrong.approachGains = {0.0, 5.0, 0.0};
-    cfgStrong.holdGains = {0.0, 5.0, 0.0};
+    cfgStrong.approachGains = { 0.0, 5.0, 0.0 };
+    cfgStrong.holdGains = { 0.0, 5.0, 0.0 };
 
     auto cfgNone = simpleConfig();
     cfgNone.antiwindupGain = 0.0;
-    cfgNone.approachGains = {0.0, 5.0, 0.0};
-    cfgNone.holdGains = {0.0, 5.0, 0.0};
+    cfgNone.approachGains = { 0.0, 5.0, 0.0 };
+    cfgNone.holdGains = { 0.0, 5.0, 0.0 };
 
     PidController pidStrong(cfgStrong);
     PidController pidNone(cfgNone);
@@ -882,10 +923,11 @@ TEST(PidDifferentConfigs, StrongAntiwindupReducesIntegralMoreThanWeak) {
     EXPECT_LT(pidStrong.getIntegral(), pidNone.getIntegral());
 }
 
-TEST(PidDifferentConfigs, POnlyController) {
+TEST(PidDifferentConfigs, POnlyController)
+{
     auto cfg = simpleConfig();
-    cfg.approachGains = {10.0, 0.0, 0.0};
-    cfg.holdGains = {5.0, 0.0, 0.0};
+    cfg.approachGains = { 10.0, 0.0, 0.0 };
+    cfg.holdGains = { 5.0, 0.0, 0.0 };
     PidController pid(cfg);
 
     for (int i = 0; i < 100; i++) {
@@ -897,10 +939,11 @@ TEST(PidDifferentConfigs, POnlyController) {
     }
 }
 
-TEST(PidDifferentConfigs, PIController) {
+TEST(PidDifferentConfigs, PIController)
+{
     auto cfg = simpleConfig();
-    cfg.approachGains = {10.0, 1.0, 0.0};
-    cfg.holdGains = {5.0, 0.5, 0.0};
+    cfg.approachGains = { 10.0, 1.0, 0.0 };
+    cfg.holdGains = { 5.0, 0.5, 0.0 };
     PidController pid(cfg);
 
     PidOutput lastResult;
@@ -913,11 +956,12 @@ TEST(PidDifferentConfigs, PIController) {
     EXPECT_NEAR(lastResult.dTerm, 0.0, 0.001);
 }
 
-TEST(PidDifferentConfigs, LowIntegralLimit) {
+TEST(PidDifferentConfigs, LowIntegralLimit)
+{
     auto cfg = simpleConfig();
-    cfg.integralLimit = 1.0;  // very tight
-    cfg.approachGains = {0.0, 100.0, 0.0};
-    cfg.holdGains = {0.0, 100.0, 0.0};
+    cfg.integralLimit = 1.0; // very tight
+    cfg.approachGains = { 0.0, 100.0, 0.0 };
+    cfg.holdGains = { 0.0, 100.0, 0.0 };
     PidController pid(cfg);
 
     for (int i = 0; i < 100; i++) {
@@ -928,7 +972,8 @@ TEST(PidDifferentConfigs, LowIntegralLimit) {
     EXPECT_GE(pid.getIntegral(), -1.0);
 }
 
-TEST(PidDifferentConfigs, NoSetpointApproachOffset) {
+TEST(PidDifferentConfigs, NoSetpointApproachOffset)
+{
     auto cfg = simpleConfig();
     cfg.setpointApproachOffsetC = 0.0;
     PidController pid(cfg);
@@ -938,7 +983,8 @@ TEST(PidDifferentConfigs, NoSetpointApproachOffset) {
     EXPECT_DOUBLE_EQ(r.effectiveSetpoint, sp);
 }
 
-TEST(PidDifferentConfigs, LargeSetpointApproachOffset) {
+TEST(PidDifferentConfigs, LargeSetpointApproachOffset)
+{
     auto cfg = simpleConfig();
     cfg.setpointApproachOffsetC = 10.0;
     PidController pid(cfg);
@@ -948,13 +994,14 @@ TEST(PidDifferentConfigs, LargeSetpointApproachOffset) {
     EXPECT_DOUBLE_EQ(r.effectiveSetpoint, sp + 10.0);
 }
 
-TEST(PidDifferentConfigs, NoKiReduction) {
+TEST(PidDifferentConfigs, NoKiReduction)
+{
     auto cfg = simpleConfig();
     cfg.kiReductionBandNarrowC = 0.0;
     cfg.kiReductionBandWideC = 0.0;
     PidController pid(cfg);
 
-    PidGains gains = {0.0, 10.0, 0.0};
+    PidGains gains = { 0.0, 10.0, 0.0 };
     pid.setGains(gains, gains);
 
     double sp = 300.0;
@@ -966,17 +1013,18 @@ TEST(PidDifferentConfigs, NoKiReduction) {
     EXPECT_NEAR(r.iTerm, 10.0 * error, 0.1);
 }
 
-TEST(PidDifferentConfigs, FullKiReductionInNarrowBand) {
+TEST(PidDifferentConfigs, FullKiReductionInNarrowBand)
+{
     auto cfg = simpleConfig();
-    cfg.kiReductionFactorNarrow = 0.0;  // complete suppression
-    cfg.kiReductionBandNarrowC = 5.0;   // wide narrow band
+    cfg.kiReductionFactorNarrow = 0.0; // complete suppression
+    cfg.kiReductionBandNarrowC = 5.0; // wide narrow band
     PidController pid(cfg);
 
-    PidGains gains = {0.0, 10.0, 0.0};
+    PidGains gains = { 0.0, 10.0, 0.0 };
     pid.setGains(gains, gains);
 
     double sp = 300.0;
-    double temp = sp - 1.0;  // within narrow band (error=1 < 5)
+    double temp = sp - 1.0; // within narrow band (error=1 < 5)
     auto r = pid.compute(temp, sp, 1.0);
 
     // Ki reduced to 0 -> iTerm should be 0
@@ -987,12 +1035,13 @@ TEST(PidDifferentConfigs, FullKiReductionInNarrowBand) {
 // Section 6: Cross-config comparison (production vs modified)
 // ============================================================================
 
-TEST(PidCrossConfig, ProductionConfigProducesSameResultsAsTwoIdenticalInstances) {
+TEST(PidCrossConfig, ProductionConfigProducesSameResultsAsTwoIdenticalInstances)
+{
     PidController pid1(productionConfig());
     PidController pid2(productionConfig());
 
     double sp = 315.0;
-    double temps[] = {100.0, 200.0, 280.0, 310.0, 314.0, 315.0, 316.0, 314.5, 315.0};
+    double temps[] = { 100.0, 200.0, 280.0, 310.0, 314.0, 315.0, 316.0, 314.5, 315.0 };
 
     for (double t : temps) {
         auto r1 = pid1.compute(t, sp, 0.02);
@@ -1007,7 +1056,8 @@ TEST(PidCrossConfig, ProductionConfigProducesSameResultsAsTwoIdenticalInstances)
     }
 }
 
-TEST(PidCrossConfig, ResetRestoresToInitialBehavior) {
+TEST(PidCrossConfig, ResetRestoresToInitialBehavior)
+{
     PidController pid(productionConfig());
 
     double sp = 315.0;
@@ -1032,11 +1082,12 @@ TEST(PidCrossConfig, ResetRestoresToInitialBehavior) {
     EXPECT_DOUBLE_EQ(rFirst.effectiveSetpoint, rAfterReset.effectiveSetpoint);
 }
 
-TEST(PidCrossConfig, ModifiedGainsViaSetGainsMatchNewConfig) {
+TEST(PidCrossConfig, ModifiedGainsViaSetGainsMatchNewConfig)
+{
     // Create one PID with default config, then modify gains
     PidController pidModified(productionConfig());
-    PidGains newApproach = {50.0, 1.0, 3.0};
-    PidGains newHold = {25.0, 0.5, 3.0};
+    PidGains newApproach = { 50.0, 1.0, 3.0 };
+    PidGains newHold = { 25.0, 0.5, 3.0 };
     pidModified.setGains(newApproach, newHold);
 
     // Create another PID with the gains set in config
@@ -1057,7 +1108,8 @@ TEST(PidCrossConfig, ModifiedGainsViaSetGainsMatchNewConfig) {
 // Section 7: Bumpless transfer with different configs
 // ============================================================================
 
-TEST(PidBumplessTransfer, TransferPreservesOutputContinuity) {
+TEST(PidBumplessTransfer, TransferPreservesOutputContinuity)
+{
     PidController pid(productionConfig());
 
     double currentOutput = 180.0;
@@ -1075,7 +1127,8 @@ TEST(PidBumplessTransfer, TransferPreservesOutputContinuity) {
     EXPECT_TRUE(std::isfinite(r.rawOutput));
 }
 
-TEST(PidBumplessTransfer, TransferWithZeroOutput) {
+TEST(PidBumplessTransfer, TransferWithZeroOutput)
+{
     PidController pid(productionConfig());
     pid.initializeForBumplessTransfer(0.0, 315.0, 315.0);
 
@@ -1084,16 +1137,18 @@ TEST(PidBumplessTransfer, TransferWithZeroOutput) {
     EXPECT_GE(r.rawOutput, 0.0);
 }
 
-TEST(PidBumplessTransfer, TransferWithMaxOutput) {
+TEST(PidBumplessTransfer, TransferWithMaxOutput)
+{
     PidController pid(productionConfig());
     pid.initializeForBumplessTransfer(255.0, 200.0, 315.0);
 
     auto r = pid.compute(200.0, 315.0, 0.02);
     EXPECT_TRUE(std::isfinite(r.rawOutput));
-    EXPECT_EQ(r.rawOutput, 255.0);  // should still saturate
+    EXPECT_EQ(r.rawOutput, 255.0); // should still saturate
 }
 
-TEST(PidBumplessTransfer, IntegralPreloadClampedToLimit) {
+TEST(PidBumplessTransfer, IntegralPreloadClampedToLimit)
+{
     PidController pid(productionConfig());
 
     // Very high output would require huge integral -> should be clamped
@@ -1106,10 +1161,11 @@ TEST(PidBumplessTransfer, IntegralPreloadClampedToLimit) {
 // Section 8: Derivative enable/disable logic in detail
 // ============================================================================
 
-TEST(PidDerivativeLogic, DisabledFarBelowSetpoint) {
+TEST(PidDerivativeLogic, DisabledFarBelowSetpoint)
+{
     auto cfg = simpleConfig();
-    cfg.approachGains = {0.0, 0.0, 100.0};
-    cfg.holdGains = {0.0, 0.0, 100.0};
+    cfg.approachGains = { 0.0, 0.0, 100.0 };
+    cfg.holdGains = { 0.0, 0.0, 100.0 };
     cfg.gainSwitchBandC = 1.0;
     cfg.derivativeEnableMarginC = 0.5;
     PidController pid(cfg);
@@ -1122,13 +1178,14 @@ TEST(PidDerivativeLogic, DisabledFarBelowSetpoint) {
     // And processValue (210) < effectiveSetpoint (302)
     // Both conditions false -> dTerm = 0
     EXPECT_NEAR(r.dTerm, 0.0, 0.01);
-    EXPECT_NE(r.derivativeCps, 0.0);  // derivative IS computed, just not applied
+    EXPECT_NE(r.derivativeCps, 0.0); // derivative IS computed, just not applied
 }
 
-TEST(PidDerivativeLogic, EnabledWithinMargin) {
+TEST(PidDerivativeLogic, EnabledWithinMargin)
+{
     auto cfg = simpleConfig();
-    cfg.approachGains = {0.0, 0.0, 10.0};
-    cfg.holdGains = {0.0, 0.0, 10.0};
+    cfg.approachGains = { 0.0, 0.0, 10.0 };
+    cfg.holdGains = { 0.0, 0.0, 10.0 };
     cfg.gainSwitchBandC = 1.0;
     cfg.derivativeEnableMarginC = 0.5;
     PidController pid(cfg);
@@ -1140,10 +1197,11 @@ TEST(PidDerivativeLogic, EnabledWithinMargin) {
     EXPECT_NE(r.dTerm, 0.0);
 }
 
-TEST(PidDerivativeLogic, EnabledAboveSetpoint) {
+TEST(PidDerivativeLogic, EnabledAboveSetpoint)
+{
     auto cfg = simpleConfig();
-    cfg.approachGains = {0.0, 0.0, 10.0};
-    cfg.holdGains = {0.0, 0.0, 10.0};
+    cfg.approachGains = { 0.0, 0.0, 10.0 };
+    cfg.holdGains = { 0.0, 0.0, 10.0 };
     PidController pid(cfg);
 
     double sp = 300.0;
@@ -1154,12 +1212,13 @@ TEST(PidDerivativeLogic, EnabledAboveSetpoint) {
     EXPECT_NE(r.dTerm, 0.0);
 }
 
-TEST(PidDerivativeLogic, DerivativeIsOnProcessNotError) {
+TEST(PidDerivativeLogic, DerivativeIsOnProcessNotError)
+{
     // PID uses derivative-on-measurement (negative of dTemp/dt)
     auto cfg = simpleConfig();
     cfg.derivativeFilterAlpha = 1.0;
-    cfg.approachGains = {0.0, 0.0, 10.0};
-    cfg.holdGains = {0.0, 0.0, 10.0};
+    cfg.approachGains = { 0.0, 0.0, 10.0 };
+    cfg.holdGains = { 0.0, 0.0, 10.0 };
     cfg.gainSwitchBandC = 100.0;
     cfg.derivativeEnableMarginC = 100.0;
     PidController pid(cfg);

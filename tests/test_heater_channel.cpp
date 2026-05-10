@@ -18,107 +18,114 @@ static constexpr double RATE_LIMIT_MAX_CPS = 5.0;
 static constexpr double RATE_LIMIT_OUTPUT_REDUCTION = 0.5;
 static constexpr double DEFAULT_CALIBRATION_OFFSET_C = -75.0;
 
-static inline GovernorConfig testGovernorConfig() {
+static inline GovernorConfig testGovernorConfig()
+{
     return GovernorConfig{
-            .rampUpFraction = GOVERNOR_RAMP_UP_FRACTION,
-            .rampDownFraction = GOVERNOR_RAMP_DOWN_FRACTION,
-            .updatePeriodMs = GOVERNOR_UPDATE_PERIOD_MS,
-            .pwmResolution = PWM_RESOLUTION,
+        .rampUpFraction = GOVERNOR_RAMP_UP_FRACTION,
+        .rampDownFraction = GOVERNOR_RAMP_DOWN_FRACTION,
+        .updatePeriodMs = GOVERNOR_UPDATE_PERIOD_MS,
+        .pwmResolution = PWM_RESOLUTION,
     };
 }
 
-static inline RateLimiterConfig testRateLimiterConfig() {
+static inline RateLimiterConfig testRateLimiterConfig()
+{
     return RateLimiterConfig{
-            .thresholdCps = RATE_LIMIT_THRESHOLD_CPS,
-            .maxRateCps = RATE_LIMIT_MAX_CPS,
-            .outputReductionFactor = RATE_LIMIT_OUTPUT_REDUCTION,
-            .pwmResolution = PWM_RESOLUTION,
+        .thresholdCps = RATE_LIMIT_THRESHOLD_CPS,
+        .maxRateCps = RATE_LIMIT_MAX_CPS,
+        .outputReductionFactor = RATE_LIMIT_OUTPUT_REDUCTION,
+        .pwmResolution = PWM_RESOLUTION,
     };
 }
 
-static inline DutyFloorConfig testDutyFloorConfig() {
+static inline DutyFloorConfig testDutyFloorConfig()
+{
     return DutyFloorConfig{
-            .atSetpointLow = 0.88,
-            .atSetpointHigh = 0.90,
-            .belowSpCloseLow = 0.86,
-            .belowSpCloseHigh = 0.93,
-            .belowSpFarLow = 0.91,
-            .belowSpFarHigh = 0.97,
-            .aboveSpBaseOffset = 0.22,
-            .aboveSpMinimum = 0.50,
-            .aboveSpAtMaxError = 0.15,
-            .errorThresholdFarC = FLOOR_ERROR_THRESHOLD_FAR_C,
-            .errorThresholdMidC = 2.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-            .errorThresholdCloseC = 0.5 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-            .holdBandC = 6.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-            .setpointMinC = 350.0,
-            .setpointMaxC = 600.0,
-            .pwmResolution = PWM_RESOLUTION,
+        .atSetpointLow = 0.88,
+        .atSetpointHigh = 0.90,
+        .belowSpCloseLow = 0.86,
+        .belowSpCloseHigh = 0.93,
+        .belowSpFarLow = 0.91,
+        .belowSpFarHigh = 0.97,
+        .aboveSpBaseOffset = 0.22,
+        .aboveSpMinimum = 0.50,
+        .aboveSpAtMaxError = 0.15,
+        .errorThresholdFarC = FLOOR_ERROR_THRESHOLD_FAR_C,
+        .errorThresholdMidC = 2.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+        .errorThresholdCloseC = 0.5 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+        .holdBandC = 6.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+        .setpointMinC = 350.0,
+        .setpointMaxC = 600.0,
+        .pwmResolution = PWM_RESOLUTION,
     };
 }
 
-static inline NtcConfig testNtcConfig() {
+static inline NtcConfig testNtcConfig()
+{
     return NtcConfig{
-            .seriesResistorOhms = 470.0,
-            .nominalResistanceOhms = 100000.0,
-            .betaCoefficient = 3950.0,
-            .referenceTempC = 25.0,
-            .supplyVoltageMv = 3300,
-            .disconnectedMarginMv = 2.0,
-            .minReasonableResistanceOhms = 1.0,
-            .maxReasonableResistanceOhms = 5000000.0,
-            .maxValidTempC = 350.0,
-            .minValidTempC = -40.0,
+        .seriesResistorOhms = 470.0,
+        .nominalResistanceOhms = 100000.0,
+        .betaCoefficient = 3950.0,
+        .referenceTempC = 25.0,
+        .supplyVoltageMv = 3300,
+        .disconnectedMarginMv = 2.0,
+        .minReasonableResistanceOhms = 1.0,
+        .maxReasonableResistanceOhms = 5000000.0,
+        .maxValidTempC = 350.0,
+        .minValidTempC = -40.0,
     };
 }
 
-static inline PidConfig testPidConfig() {
+static inline PidConfig testPidConfig()
+{
     return PidConfig{
-            .approachGains = {36.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-                              0.55 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-                              5.5 / FAHRENHEIT_TO_CELSIUS_FACTOR},
-            .holdGains = {16.0 / FAHRENHEIT_TO_CELSIUS_FACTOR, 0.32 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-                          5.5 / FAHRENHEIT_TO_CELSIUS_FACTOR},
-            .derivativeFilterAlpha = 0.25,
-            .derivativeFilterAlphaMin = 0.05,
-            .derivativeFilterAlphaMax = 1.0,
-            .setpointApproachThresholdC = 5.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-            .setpointApproachOffsetC = 2.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-            .gainSwitchBandC = 1.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-            .derivativeEnableMarginC = 0.5 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-            .kiReductionBandNarrowC = 1.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-            .kiReductionBandWideC = 2.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-            .kiReductionFactorNarrow = 0.5,
-            .kiReductionFactorWide = 0.6,
-            .integralLimit = 500.0,
-            .antiwindupGain = 0.2,
-            .hysteresisAboveSetpointC = 0.8 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-            .hysteresisBelowSetpointC = 1.2 / FAHRENHEIT_TO_CELSIUS_FACTOR,
-            .outputMax = 255.0,
+        .approachGains = { 36.0 / FAHRENHEIT_TO_CELSIUS_FACTOR, 0.55 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+                           5.5 / FAHRENHEIT_TO_CELSIUS_FACTOR },
+        .holdGains = { 16.0 / FAHRENHEIT_TO_CELSIUS_FACTOR, 0.32 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+                       5.5 / FAHRENHEIT_TO_CELSIUS_FACTOR },
+        .derivativeFilterAlpha = 0.25,
+        .derivativeFilterAlphaMin = 0.05,
+        .derivativeFilterAlphaMax = 1.0,
+        .setpointApproachThresholdC = 5.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+        .setpointApproachOffsetC = 2.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+        .gainSwitchBandC = 1.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+        .derivativeEnableMarginC = 0.5 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+        .kiReductionBandNarrowC = 1.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+        .kiReductionBandWideC = 2.0 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+        .kiReductionFactorNarrow = 0.5,
+        .kiReductionFactorWide = 0.6,
+        .integralLimit = 500.0,
+        .antiwindupGain = 0.2,
+        .hysteresisAboveSetpointC = 0.8 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+        .hysteresisBelowSetpointC = 1.2 / FAHRENHEIT_TO_CELSIUS_FACTOR,
+        .outputMax = 255.0,
     };
 }
 
-static inline HeaterChannelConfig testHeaterChannelConfig() {
+static inline HeaterChannelConfig testHeaterChannelConfig()
+{
     return HeaterChannelConfig{
-            .pid = testPidConfig(),
-            .floor = testDutyFloorConfig(),
-            .governor = testGovernorConfig(),
-            .rateLimiter = testRateLimiterConfig(),
-            .ntc = testNtcConfig(),
+        .pid = testPidConfig(),
+        .floor = testDutyFloorConfig(),
+        .governor = testGovernorConfig(),
+        .rateLimiter = testRateLimiterConfig(),
+        .ntc = testNtcConfig(),
     };
 }
 
 // --- DutyGovernor ---
 
-TEST(DutyGovernor, FirstUpdateJumpsToTarget) {
+TEST(DutyGovernor, FirstUpdateJumpsToTarget)
+{
     DutyGovernor gov(testGovernorConfig());
     double duty = gov.update(200.0, 1000);
     EXPECT_DOUBLE_EQ(duty, 200.0);
 }
 
-TEST(DutyGovernor, RateLimitsLargeStepUp) {
+TEST(DutyGovernor, RateLimitsLargeStepUp)
+{
     DutyGovernor gov(testGovernorConfig());
-    gov.update(0.0, 1000);  // Initialize at 0
+    gov.update(0.0, 1000); // Initialize at 0
 
     // After period elapses, step to 255
     double duty = gov.update(255.0, 1000 + GOVERNOR_UPDATE_PERIOD_MS);
@@ -126,9 +133,10 @@ TEST(DutyGovernor, RateLimitsLargeStepUp) {
     EXPECT_LE(duty, maxStep + 0.01);
 }
 
-TEST(DutyGovernor, RateLimitsLargeStepDown) {
+TEST(DutyGovernor, RateLimitsLargeStepDown)
+{
     DutyGovernor gov(testGovernorConfig());
-    gov.update(255.0, 1000);  // Initialize at 255
+    gov.update(255.0, 1000); // Initialize at 255
 
     // Step down to 0
     double duty = gov.update(0.0, 1000 + GOVERNOR_UPDATE_PERIOD_MS);
@@ -136,7 +144,8 @@ TEST(DutyGovernor, RateLimitsLargeStepDown) {
     EXPECT_GE(duty, 255.0 - maxStepDown - 0.01);
 }
 
-TEST(DutyGovernor, IgnoresUpdateWithinPeriod) {
+TEST(DutyGovernor, IgnoresUpdateWithinPeriod)
+{
     DutyGovernor gov(testGovernorConfig());
     gov.update(100.0, 1000);
 
@@ -145,7 +154,8 @@ TEST(DutyGovernor, IgnoresUpdateWithinPeriod) {
     EXPECT_DOUBLE_EQ(duty, 100.0);
 }
 
-TEST(DutyGovernor, ResetSetsInitialDuty) {
+TEST(DutyGovernor, ResetSetsInitialDuty)
+{
     DutyGovernor gov(testGovernorConfig());
     gov.update(200.0, 1000);
     gov.reset(50.0);
@@ -155,7 +165,8 @@ TEST(DutyGovernor, ResetSetsInitialDuty) {
 
 // --- DutyFloorCalculator ---
 
-TEST(DutyFloor, FarBelowSetpointReturnsFullFloor) {
+TEST(DutyFloor, FarBelowSetpointReturnsFullFloor)
+{
     DutyFloorCalculator calc(testDutyFloorConfig());
     FloorReason reason;
     double setpoint = 290.0;
@@ -167,7 +178,8 @@ TEST(DutyFloor, FarBelowSetpointReturnsFullFloor) {
     EXPECT_NEAR(floor, static_cast<double>(PWM_RESOLUTION), 1.0);
 }
 
-TEST(DutyFloor, AboveSetpointReducesFloor) {
+TEST(DutyFloor, AboveSetpointReducesFloor)
+{
     DutyFloorCalculator calc(testDutyFloorConfig());
     FloorReason reason;
     double setpoint = 290.0;
@@ -179,7 +191,8 @@ TEST(DutyFloor, AboveSetpointReducesFloor) {
     EXPECT_GT(floor, 0.0);
 }
 
-TEST(DutyFloor, FarAboveSetpointReturnsMinFloor) {
+TEST(DutyFloor, FarAboveSetpointReturnsMinFloor)
+{
     DutyFloorCalculator calc(testDutyFloorConfig());
     FloorReason reason;
     double setpoint = 290.0;
@@ -192,7 +205,8 @@ TEST(DutyFloor, FarAboveSetpointReturnsMinFloor) {
 
 // --- RateLimiter ---
 
-TEST(RateLimiter, NoLimitBelowThreshold) {
+TEST(RateLimiter, NoLimitBelowThreshold)
+{
     RateLimiter limiter(testRateLimiterConfig());
     bool active = false;
     double duty = limiter.applyLimit(200.0, 1.0, active);
@@ -200,7 +214,8 @@ TEST(RateLimiter, NoLimitBelowThreshold) {
     EXPECT_DOUBLE_EQ(duty, 200.0);
 }
 
-TEST(RateLimiter, ReducesOutputAboveThreshold) {
+TEST(RateLimiter, ReducesOutputAboveThreshold)
+{
     RateLimiter limiter(testRateLimiterConfig());
     bool active = false;
     double duty = limiter.applyLimit(200.0, RATE_LIMIT_THRESHOLD_CPS + 1.0, active);
@@ -208,7 +223,8 @@ TEST(RateLimiter, ReducesOutputAboveThreshold) {
     EXPECT_LT(duty, 200.0);
 }
 
-TEST(RateLimiter, MaxReductionAtMaxRate) {
+TEST(RateLimiter, MaxReductionAtMaxRate)
+{
     RateLimiter limiter(testRateLimiterConfig());
     bool active = false;
     double duty = limiter.applyLimit(200.0, RATE_LIMIT_MAX_CPS + 10.0, active);
@@ -219,7 +235,8 @@ TEST(RateLimiter, MaxReductionAtMaxRate) {
 
 // --- HeaterChannel integration ---
 
-TEST(HeaterChannel, UpdateWithValidAdcProducesDuty) {
+TEST(HeaterChannel, UpdateWithValidAdcProducesDuty)
+{
     HeaterChannel ch(0, 34, 25, DEFAULT_CALIBRATION_OFFSET_C, testHeaterChannelConfig());
     ch.setSetpointC(290.0);
 
@@ -229,7 +246,8 @@ TEST(HeaterChannel, UpdateWithValidAdcProducesDuty) {
     EXPECT_GE(state.currentDuty, 0.0);
 }
 
-TEST(HeaterChannel, UpdateWithZeroAdcReturnsZeroDuty) {
+TEST(HeaterChannel, UpdateWithZeroAdcReturnsZeroDuty)
+{
     HeaterChannel ch(0, 34, 25, 0.0, testHeaterChannelConfig());
     ch.setSetpointC(290.0);
 
@@ -239,18 +257,20 @@ TEST(HeaterChannel, UpdateWithZeroAdcReturnsZeroDuty) {
     EXPECT_FALSE(ch.isSensorConnected());
 }
 
-TEST(HeaterChannel, ResetControlClearsDuty) {
+TEST(HeaterChannel, ResetControlClearsDuty)
+{
     HeaterChannel ch(0, 34, 25, DEFAULT_CALIBRATION_OFFSET_C, testHeaterChannelConfig());
     ch.setSetpointC(290.0);
 
     ch.update(1500, 1000, 0.02);
     ch.resetControl();
 
-    auto& state = ch.getState();
+    auto &state = ch.getState();
     EXPECT_DOUBLE_EQ(state.currentDuty, 0.0);
 }
 
-TEST(HeaterChannel, SetpointTrimAddedToSetpoint) {
+TEST(HeaterChannel, SetpointTrimAddedToSetpoint)
+{
     HeaterChannel ch(0, 0, 0, 0.0, testHeaterChannelConfig());
     ch.setSetpointC(290.0);
     ch.setSetpointTrimC(5.0);
