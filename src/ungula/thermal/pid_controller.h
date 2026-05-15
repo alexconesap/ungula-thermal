@@ -9,13 +9,13 @@
 namespace ungula::thermal
 {
 
-    struct PidGains {
+struct PidGains {
         double kp;
         double ki;
         double kd;
-    };
+};
 
-    struct PidConfig {
+struct PidConfig {
         PidGains approachGains;
         PidGains holdGains;
         double derivativeFilterAlpha;
@@ -34,9 +34,9 @@ namespace ungula::thermal
         double hysteresisAboveSetpointC;
         double hysteresisBelowSetpointC;
         double outputMax;
-    };
+};
 
-    struct PidOutput {
+struct PidOutput {
         double rawOutput;
         double pTerm;
         double iTerm;
@@ -44,9 +44,9 @@ namespace ungula::thermal
         double derivativeCps;
         double effectiveSetpoint;
         bool inHoldMode;
-    };
+};
 
-    class PidController {
+class PidController {
     public:
         explicit PidController(const PidConfig &config);
 
@@ -55,27 +55,28 @@ namespace ungula::thermal
         void setDerivativeFilterAlpha(double alpha);
         double getDerivativeFilterAlpha() const
         {
-            return derivativeAlpha_;
+                return derivativeAlpha_;
         }
         void setOutputLimits(double minOutput, double maxOutput);
-        void initializeForBumplessTransfer(double currentOutput, double currentTemp, double setpoint);
+        void initializeForBumplessTransfer(double currentOutput, double currentTemp,
+                                           double setpoint);
         PidOutput compute(double processValue, double setpoint, double dtSeconds);
 
         double getIntegral() const
         {
-            return integral_;
+                return integral_;
         }
         double getFilteredTemperature() const
         {
-            return filteredTemp_;
+                return filteredTemp_;
         }
         double getLastDerivative() const
         {
-            return lastDerivativeCps_;
+                return lastDerivativeCps_;
         }
         bool hasReachedSetpoint() const
         {
-            return reachedSetpointLatch_;
+                return reachedSetpointLatch_;
         }
 
     private:
@@ -99,6 +100,6 @@ namespace ungula::thermal
 
         bool initialized_;
         bool reachedSetpointLatch_;
-    };
+};
 
 } // namespace ungula::thermal

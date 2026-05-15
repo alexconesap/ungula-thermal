@@ -9,7 +9,7 @@
 namespace ungula::thermal
 {
 
-    struct NtcConfig {
+struct NtcConfig {
         double seriesResistorOhms;
         double nominalResistanceOhms;
         double betaCoefficient;
@@ -20,26 +20,27 @@ namespace ungula::thermal
         double maxReasonableResistanceOhms;
         double maxValidTempC;
         double minValidTempC;
-    };
+};
 
-    double ntcMillivoltsToTempC(int millivolts, const NtcConfig &cfg);
-    double applyCalibrationOffset(double rawTempC, double offsetC);
+double ntcMillivoltsToTempC(int millivolts, const NtcConfig &cfg);
+double applyCalibrationOffset(double rawTempC, double offsetC);
 
-    class TemperatureSensor {
+class TemperatureSensor {
     public:
-        TemperatureSensor(uint8_t channelIndex, int adcPin, double calibrationOffsetC, const NtcConfig &ntcCfg);
+        TemperatureSensor(uint8_t channelIndex, int adcPin, double calibrationOffsetC,
+                          const NtcConfig &ntcCfg);
 
         void setCalibrationOffset(double offsetC)
         {
-            calibrationOffset_ = offsetC;
+                calibrationOffset_ = offsetC;
         }
         double getCalibrationOffset() const
         {
-            return calibrationOffset_;
+                return calibrationOffset_;
         }
         void setNtcConfig(const NtcConfig &cfg)
         {
-            ntcConfig_ = cfg;
+                ntcConfig_ = cfg;
         }
 
         double readTemperatureC(int adcMillivolts);
@@ -47,23 +48,23 @@ namespace ungula::thermal
 
         double getLastRawTempC() const
         {
-            return lastRawTempC_;
+                return lastRawTempC_;
         }
         double getLastCalibratedTempC() const
         {
-            return lastCalibratedTempC_;
+                return lastCalibratedTempC_;
         }
         int getLastAdcMillivolts() const
         {
-            return lastAdcMv_;
+                return lastAdcMv_;
         }
         uint8_t getChannelIndex() const
         {
-            return channelIndex_;
+                return channelIndex_;
         }
         int getAdcPin() const
         {
-            return adcPin_;
+                return adcPin_;
         }
 
     private:
@@ -74,45 +75,46 @@ namespace ungula::thermal
         double lastRawTempC_;
         double lastCalibratedTempC_;
         int lastAdcMv_;
-    };
+};
 
 } // namespace ungula::thermal
 
 namespace ungula::thermal::adc
 {
 
-    void sortFiveElements(int arr[5]);
-    int computeMedianOfFive(int arr[5]);
+void sortFiveElements(int arr[5]);
+int computeMedianOfFive(int arr[5]);
 
-    template <typename ReadFunc> int readWithMedianFiltering(ReadFunc readOnce, uint8_t totalSamples, uint8_t groupSize)
-    {
+template <typename ReadFunc>
+int readWithMedianFiltering(ReadFunc readOnce, uint8_t totalSamples, uint8_t groupSize)
+{
         int groups = (totalSamples > groupSize) ? (totalSamples / groupSize) : 1;
         long sum = 0;
 
         for (int g = 0; g < groups; ++g) {
-            int buffer[5] = { 0, 0, 0, 0, 0 };
-            for (int i = 0; i < groupSize && i < 5; ++i) {
-                buffer[i] = readOnce();
-            }
-            sortFiveElements(buffer);
-            sum += buffer[2];
+                int buffer[5] = { 0, 0, 0, 0, 0 };
+                for (int i = 0; i < groupSize && i < 5; ++i) {
+                        buffer[i] = readOnce();
+                }
+                sortFiveElements(buffer);
+                sum += buffer[2];
         }
 
         return static_cast<int>(sum / groups);
-    }
+}
 
-    template <typename ReadFunc> int readWithAveraging(ReadFunc readOnce, uint8_t sampleCount)
-    {
+template <typename ReadFunc> int readWithAveraging(ReadFunc readOnce, uint8_t sampleCount)
+{
         long sum = 0;
         for (int i = 0; i < sampleCount; ++i) {
-            sum += readOnce();
+                sum += readOnce();
         }
         return static_cast<int>(sum / sampleCount);
-    }
+}
 
-    inline int rawToMillivolts(int rawValue, uint16_t supplyMv, uint16_t adcResolution)
-    {
+inline int rawToMillivolts(int rawValue, uint16_t supplyMv, uint16_t adcResolution)
+{
         return (rawValue * supplyMv) / adcResolution;
-    }
+}
 
 } // namespace ungula::thermal::adc

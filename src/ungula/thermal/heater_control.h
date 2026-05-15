@@ -13,21 +13,21 @@
 namespace ungula::thermal
 {
 
-    struct GovernorConfig {
+struct GovernorConfig {
         double rampUpFraction;
         double rampDownFraction;
         uint32_t updatePeriodMs;
         uint16_t pwmResolution;
-    };
+};
 
-    struct RateLimiterConfig {
+struct RateLimiterConfig {
         double thresholdCps;
         double maxRateCps;
         double outputReductionFactor;
         uint16_t pwmResolution;
-    };
+};
 
-    struct DutyFloorConfig {
+struct DutyFloorConfig {
         double atSetpointLow;
         double atSetpointHigh;
         double belowSpCloseLow;
@@ -45,19 +45,25 @@ namespace ungula::thermal
         // setpoint curve)
         double setpointMaxC; // maximum expected setpoint in °C
         uint16_t pwmResolution;
-    };
+};
 
-    struct HeaterChannelConfig {
+struct HeaterChannelConfig {
         PidConfig pid;
         DutyFloorConfig floor;
         GovernorConfig governor;
         RateLimiterConfig rateLimiter;
         NtcConfig ntc;
-    };
+};
 
-    enum class FloorReason : uint8_t { None = 0, BelowSetpoint = 1, AboveSetpoint = 2, HoldBand = 3, RateLimited = 4 };
+enum class FloorReason : uint8_t {
+        None = 0,
+        BelowSetpoint = 1,
+        AboveSetpoint = 2,
+        HoldBand = 3,
+        RateLimited = 4
+};
 
-    struct HeaterChannelState {
+struct HeaterChannelState {
         double currentDuty;
         double targetDuty;
         double floorDuty;
@@ -67,20 +73,20 @@ namespace ungula::thermal
         double derivativeCps;
         bool rateLimitActive;
         uint32_t lastGovernorUpdateMs;
-    };
+};
 
-    class DutyGovernor {
+class DutyGovernor {
     public:
         explicit DutyGovernor(const GovernorConfig &cfg);
         void setConfig(const GovernorConfig &cfg)
         {
-            config_ = cfg;
+                config_ = cfg;
         }
         void reset(double initialDuty = 0.0);
         double update(double targetDuty, uint32_t nowMs);
         double getCurrentDuty() const
         {
-            return currentDuty_;
+                return currentDuty_;
         }
 
     private:
@@ -88,9 +94,9 @@ namespace ungula::thermal
         double currentDuty_;
         uint32_t lastUpdateMs_;
         bool initialized_;
-    };
+};
 
-    class DutyFloorCalculator {
+class DutyFloorCalculator {
     public:
         explicit DutyFloorCalculator(const DutyFloorConfig &cfg);
         double computeFloor(double tempC, double setpointC, FloorReason &reasonOut) const;
@@ -102,57 +108,57 @@ namespace ungula::thermal
         double computeHoldFloor(double setpointC) const;
 
         DutyFloorConfig config_;
-    };
+};
 
-    class RateLimiter {
+class RateLimiter {
     public:
         explicit RateLimiter(const RateLimiterConfig &cfg);
         void setConfig(const RateLimiterConfig &cfg)
         {
-            config_ = cfg;
+                config_ = cfg;
         }
         double applyLimit(double targetDuty, double derivativeCps, bool &limitActiveOut) const;
 
     private:
         RateLimiterConfig config_;
-    };
+};
 
-    class HeaterChannel {
+class HeaterChannel {
     public:
         HeaterChannel(uint8_t index, int thermistorPin, int heaterPin, double calibrationOffsetC,
                       const HeaterChannelConfig &cfg);
 
         void setSetpointC(double setpointC)
         {
-            setpointC_ = setpointC;
+                setpointC_ = setpointC;
         }
         void setSetpointTrimC(double trimC)
         {
-            setpointTrimC_ = trimC;
+                setpointTrimC_ = trimC;
         }
         double getEffectiveSetpointC() const
         {
-            return setpointC_ + setpointTrimC_;
+                return setpointC_ + setpointTrimC_;
         }
         void setDerivativeFilterAlpha(double alpha)
         {
-            pid_.setDerivativeFilterAlpha(alpha);
+                pid_.setDerivativeFilterAlpha(alpha);
         }
         void setApproachGains(const PidGains &g)
         {
-            pid_.setGains(g, holdGains_);
-            approachGains_ = g;
+                pid_.setGains(g, holdGains_);
+                approachGains_ = g;
         }
         void setHoldGains(const PidGains &g)
         {
-            pid_.setGains(approachGains_, g);
-            holdGains_ = g;
+                pid_.setGains(approachGains_, g);
+                holdGains_ = g;
         }
         void setPidGains(const PidGains &approach, const PidGains &hold)
         {
-            approachGains_ = approach;
-            holdGains_ = hold;
-            pid_.setGains(approach, hold);
+                approachGains_ = approach;
+                holdGains_ = hold;
+                pid_.setGains(approach, hold);
         }
 
         HeaterChannelState update(int adcMillivolts, uint32_t nowMs, double dtSeconds);
@@ -161,28 +167,28 @@ namespace ungula::thermal
 
         double getTemperatureC() const
         {
-            return sensor_.getLastCalibratedTempC();
+                return sensor_.getLastCalibratedTempC();
         }
         double getTemperatureF() const;
         bool isSensorConnected() const
         {
-            return sensor_.isConnected();
+                return sensor_.isConnected();
         }
         uint16_t getDutyPwm() const
         {
-            return static_cast<uint16_t>(governor_.getCurrentDuty());
+                return static_cast<uint16_t>(governor_.getCurrentDuty());
         }
         const HeaterChannelState &getState() const
         {
-            return state_;
+                return state_;
         }
         uint8_t getIndex() const
         {
-            return index_;
+                return index_;
         }
         int getHeaterPin() const
         {
-            return heaterPin_;
+                return heaterPin_;
         }
 
     private:
@@ -200,6 +206,6 @@ namespace ungula::thermal
         DutyFloorCalculator floorCalc_;
         RateLimiter rateLimiter_;
         HeaterChannelState state_;
-    };
+};
 
 } // namespace ungula::thermal
