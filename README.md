@@ -2,7 +2,40 @@
 
 > **High-performance embedded C++ libraries for ESP32, STM32 and other MCUs** — PID thermal control, heater and fan manager, NTC temperature sensor.
 
+> **LLM usage note:** if this library is consumed from a coding AI workflow, explicitly point the agent to `API.md` first. `API.md` is the LLM-facing contract (public API + examples + constraints) and avoids wasting time/tokens scanning source files and this human-oriented README.
+
 PID-based thermal control library for ESP32. Handles heater channels with adaptive duty floors, fan control with tachometry, and NTC thermistor reading. Meant to be reusable across projects.
+
+## Table of Contents
+
+- [Unit Convention](#unit-convention)
+- [Quick Start](#quick-start)
+- [Examples](#examples)
+  - [Reading Temperature](#reading-temperature)
+  - [Dual-Mode PID](#dual-mode-pid)
+- [How the PID Algorithm Works](#how-the-pid-algorithm-works)
+  - [The basic idea](#the-basic-idea)
+  - [Dual-mode gains: approach vs hold](#dual-mode-gains-approach-vs-hold)
+  - [Setpoint approach conditioning](#setpoint-approach-conditioning)
+  - [Hysteresis: when is "setpoint reached"?](#hysteresis-when-is-setpoint-reached)
+  - [Ki reduction near setpoint](#ki-reduction-near-setpoint)
+  - [Anti-windup](#anti-windup)
+  - [Derivative filtering](#derivative-filtering)
+  - [Derivative enable/disable](#derivative-enabledisable)
+- [PID Tuning Guide](#pid-tuning-guide)
+  - [Reading the symptoms](#reading-the-symptoms)
+  - [Acceptable oscillation: the ±5 F example](#acceptable-oscillation-the-5-f-example)
+  - [General tuning rules](#general-tuning-rules)
+  - [Governor (Slew Rate Limiting)](#governor-slew-rate-limiting)
+  - [Fan Tachometry](#fan-tachometry)
+  - [Using the PID Controller Standalone](#using-the-pid-controller-standalone)
+- [Channel Counts](#channel-counts)
+- [Configuration](#configuration)
+- [Testing](#testing)
+- [Dependencies](#dependencies)
+- [Acknowledgements](#acknowledgements)
+- [License](#license)
+- [Arduino CLI symlink note (rarely relevant)](#arduino-cli-symlink-note-rarely-relevant)
 
 ## Unit Convention
 

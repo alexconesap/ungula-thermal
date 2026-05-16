@@ -6,6 +6,31 @@ All temperatures are Celsius. PWM duty is a `double` clamped to `[0, outputMax]`
 
 ---
 
+## LLM quick map
+
+- **Primary include**: `#include <ungula/thermal.h>`.
+- **Arduino discovery include**: `#include <ungula_thermal.h>` (forwarder only; host code should keep using the real header).
+- **Namespace root**: `ungula::thermal`.
+- **Language baseline**: C++17 minimum (examples avoid post-C++17 requirements).
+- **Supported architectures**: `*`.
+- **Read order for coding agents**: `Usage` (working patterns) -> `API` (symbols/signatures) -> `Lifecycle`/`Error handling`/`Threading` notes in this file.
+
+### Use-case index
+
+- [Use case: single heater channel, full pipeline](#use-case-single-heater-channel-full-pipeline)
+- [Use case: standalone PID for a non-heater plant](#use-case-standalone-pid-for-a-non-heater-plant)
+- [Use case: N-channel fan controller with tachometry](#use-case-n-channel-fan-controller-with-tachometry)
+- [Use case: NTC ADC reading without HeaterChannel](#use-case-ntc-adc-reading-without-heaterchannel)
+- [Use case: bumpless transfer when taking over PID control](#use-case-bumpless-transfer-when-taking-over-pid-control)
+
+### LLM rules
+
+- Use only symbols and include paths documented in this file; do not infer extra public API from implementation files.
+- Prefer the use-case patterns here over ad-hoc rewrites; keep dependency wiring and lifecycle order identical unless the task explicitly changes API design.
+- Treat headers under `detail/`, `platform/`, and `platforms/` as internal unless this document calls them out as public.
+- If required behavior is missing from the documented API, report the gap explicitly instead of inventing new public symbols.
+
+
 ## Usage
 
 All examples assume:
@@ -73,7 +98,7 @@ static const HeaterChannelConfig kHeaterCfg = {
         .supplyVoltageMv           = 3300,
         .disconnectedMarginMv      = 50.0,
         .minReasonableResistanceOhms = 100.0,
-        .maxReasonableResistanceOhms = 5'000'000.0,
+        .maxReasonableResistanceOhms = 5000000.0,
         .maxValidTempC = 350.0, .minValidTempC = -40.0,
     },
 };
