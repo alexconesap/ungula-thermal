@@ -11,7 +11,9 @@ All temperatures are Celsius. PWM duty is a `double` clamped to `[0, outputMax]`
 - **Primary include**: `#include <ungula/thermal.h>`.
 - **Arduino discovery include**: `#include <ungula_thermal.h>` (forwarder only; host code should keep using the real header).
 - **Namespace root**: `ungula::thermal`.
-- **Language baseline**: C++17 minimum (examples avoid post-C++17 requirements).
+- **Own source minimum**: `C++17`.
+- **Effective minimum for consumers**: `C++17`.
+- **Dependency impact**: Declared internal dependency `UngulaCore` is `C++17`.
 - **Supported architectures**: `*`.
 - **Read order for coding agents**: `Usage` (working patterns) -> `API` (symbols/signatures) -> `Lifecycle`/`Error handling`/`Threading` notes in this file.
 
